@@ -1,0 +1,33 @@
+## Windows
+Thumbs.db
+
+## OSX
+.DS_Store
+.AppleDouble
+.LSOverride
+
+## Gradle
+/.gradle
+/build
+
+## Eclipse
+/.settings
+/.classpath
+/.project
+/eclipse
+/bin
+
+## IntelliJ
+/out
+/.idea
+/atlassian-ide-plugin.xml
+/*.ipr
+/*.iws
+/*.iml
+
+## Other
+/minecraft
+/**/*.psd
+/**/*.blend1
+/**/*.blend2
+/**/*.blend3

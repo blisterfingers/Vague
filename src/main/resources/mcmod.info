@@ -1,0 +1,16 @@
+[
+{
+  "modid": "vague",
+  "name": "Villain's Arbitrary Gadgets, Utensils & Epicaricacy",
+  "description": "Various items & blocks brought to you by Villain.",
+  "version": "${mod_version}",
+  "mcversion": "${minecraft_version}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Villain"],
+  "credits": "MCP/Forge/FML/etc teams for all their hard work.",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]

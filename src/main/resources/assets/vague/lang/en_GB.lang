@@ -1,0 +1,10 @@
+itemGroup.vague=V.A.G.U.E
+
+
+item.vague:testthing.name=Test Thing
+item.vague:magnet.name=Magnet
+item.vague:tipharesembyro.name=Tiphares Embryo
+tile.vague:uncertaintyborder.name=Rigidly Defined Area of Doubt and Uncertainty
+tile.vague:numblock.name=Number Block
+tile.vague:connectedtest.name=Connected Textures Test Block
+tile.vague:tipharesplant.name=Tiphares Plant
