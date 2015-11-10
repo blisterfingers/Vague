@@ -10,6 +10,7 @@ import villain.mc.vague.blocks.tests.BlockNumBlock;
 import villain.mc.vague.items.ItemMagnet;
 import villain.mc.vague.items.ItemTestThing;
 import villain.mc.vague.items.ItemTipharesEmbryo;
+import villain.mc.vague.tileents.TileEntityTipharesPlant;
 import villain.mc.vague.tileents.TileEntityUncertaintyBorder;
 
 public class Init {
@@ -28,7 +29,7 @@ public class Init {
 	// Items
 	public static ItemMagnet itemMagnet;
 	public static ItemTipharesEmbryo itemTipharesEmbryo;
-	
+		
 	public static void initItems(){
 		// Test Blocks
 		blockNumBlock = new BlockNumBlock();
@@ -47,6 +48,7 @@ public class Init {
 		
 		// TileEntities
 		GameRegistry.registerTileEntity(TileEntityUncertaintyBorder.class, "TileEntityUncertaintyBorder");
+		GameRegistry.registerTileEntity(TileEntityTipharesPlant.class, "TileEntityTipharesPlant");
 	}
 	
 	// Creative Tabs

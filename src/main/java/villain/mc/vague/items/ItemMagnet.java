@@ -22,6 +22,7 @@ import net.minecraftforge.common.util.Constants.NBT;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import villain.mc.vague.Reference;
 import villain.mc.vague.Vague;
+import villain.mc.vague.container.ContainerMagnet;
 import villain.mc.vague.net.MagnetUpdatePacket;
 import villain.mc.vague.net.PacketHandler;
 import villain.mc.vague.utils.EntityHelper;
@@ -68,8 +69,6 @@ public class ItemMagnet extends ItemBase {
 	public void onCreated(ItemStack itemStack, World world, EntityPlayer entityPlayer) {
 		checkAndCreateStackTag(itemStack);
 	}
-	
-	
 	
 	@Override
 	public void registerIcons(IIconRegister iconRegister) {
@@ -149,11 +148,17 @@ public class ItemMagnet extends ItemBase {
 		
 		// Remove old items from the list
 		removeOldItemsFromCooldownList(itemStack, world.getWorldTime());
+		
+		// GUI Update
+		if(!world.isRemote && entity instanceof EntityPlayer){
+			EntityPlayerMP player = (EntityPlayerMP)entity;
+			if(player.openContainer != null && player.openContainer instanceof ContainerMagnet && ((ContainerMagnet)player.openContainer).needsSaving()){
+				((ContainerMagnet)player.openContainer).save();
+			}
+		}
 	}
 	
 	private boolean canPull(ItemStack magnetStack, EntityItem item){
-		//LogHelper.info("testing pull on: " + item.getUniqueID().toString());
-				
 		if(item.isDead || item.age < 20){
 			return false;
 		}
@@ -167,15 +172,7 @@ public class ItemMagnet extends ItemBase {
 		NBTTagList cooldownList = magnetStack.stackTagCompound.getTagList(TAG_COOLDOWNLIST_TAG, NBT.TAG_COMPOUND);
 		//NBTTagList blackList = magnetStack.stackTagCompound.getTagList(TAG_BLACKLIST_TAG, NBT.TAG_COMPOUND);
 				
-		// Is this item black or white listed
-		/*for(int i = 0; i < blackList.tagCount(); i++){
-			MagnetBlackListItem blackListItem = new MagnetBlackListItem(blackList.getCompoundTagAt(i));
-			int matchVal = blackListItem.doesMatch(item.getEntityItem());
-			if(matchVal == 0){
-				// On blacklist so ignore this item
-				return false;
-			}
-		}	*/
+		// TODO Check blacklist
 		
 		// If this item's UUID is in the list, it can't be pulled yet.
 		for(int i = 0; i < cooldownList.tagCount(); i++){
@@ -188,39 +185,6 @@ public class ItemMagnet extends ItemBase {
 				
 		return true;
 	}
-	
-	/*BACKUP private boolean canPull(ItemStack magnetStack, EntityItem item){
-		//LogHelper.info("testing pull on: " + item.getUniqueID().toString());
-				
-		if(item.isDead){
-			
-			return false;
-		}
-		
-		// Does this magnet have nbt?
-		if(magnetStack.stackTagCompound == null){
-			return true;
-		}
-		
-		// Does this magnet have a cooldown list?
-		if(!magnetStack.stackTagCompound.hasKey(TAG_COOLDOWNLIST_TAG)){
-			return true;
-		}
-		
-		// Get the list
-		NBTTagList tagList = magnetStack.stackTagCompound.getTagList(TAG_COOLDOWNLIST_TAG, NBT.TAG_COMPOUND);
-		
-		// If this item's UUID is in the list, it can't be pulled yet.
-		for(int i = 0; i < tagList.tagCount(); i++){
-			NBTTagCompound compound = tagList.getCompoundTagAt(i);
-			int id = compound.getInteger("id");
-			if(item.getEntityId() == id){
-				return false;
-			}
-		}
-		
-		return true;
-	}*/
 	
 	private void checkAndCreateStackTag(ItemStack itemStack){
 		if(itemStack.stackTagCompound == null){

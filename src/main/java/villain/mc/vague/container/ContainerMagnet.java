@@ -1,7 +1,5 @@
 package villain.mc.vague.container;
 
-import java.util.ArrayList;
-
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.entity.player.EntityPlayer;
@@ -10,38 +8,28 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ICrafting;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraftforge.common.util.Constants.NBT;
-import villain.mc.vague.items.ItemMagnet;
+import net.minecraft.nbt.NBTTagCompound;
+import villain.mc.vague.inventory.InventoryMagnetBlacklist;
 import villain.mc.vague.utils.LogHelper;
-import villain.mc.vague.utils.MagnetBlackListItem;
 
 public class ContainerMagnet extends Container {
 
 	private ItemStack magnetStack;
-	private ArrayList<MagnetBlackListItem> blackListItems;
+	private InventoryMagnetBlacklist invMagnet;
+	private boolean dirty = false;
 	
-	public ContainerMagnet(InventoryPlayer inventoryPlayer, int magnetSlot){
+	public ContainerMagnet(InventoryPlayer inventoryPlayer, ItemStack magnetStack){
 		super();
 		
-		// Find magnetStack
-		magnetStack = inventoryPlayer.getStackInSlot(magnetSlot);
+		this.magnetStack = magnetStack;
+		
+		LogHelper.info("Container constructor");
+		
+		// Get inventory from magnet
+		invMagnet = new InventoryMagnetBlacklist(magnetStack);
 		
 		int slotID = 0;
-		
-		// Blacklist
-		NBTTagList tagList = magnetStack.stackTagCompound.getTagList(ItemMagnet.TAG_BLACKLIST_TAG, NBT.TAG_COMPOUND);
-		blackListItems = new ArrayList<MagnetBlackListItem>();
-		for(int i = 0; i < tagList.tagCount(); i++){
-			// Item
-			MagnetBlackListItem item = new MagnetBlackListItem(tagList.getCompoundTagAt(i));
-			blackListItems.add(item);
-			
-			// Slot
-			addSlotToContainer(new Slot(null, i, 8, 8 + (i * 17)));
-			
-		}
-		
+				
 		// Hot bar slots
 		for(int i = 0; i < 9; i++){
 			addSlotToContainer(new Slot(inventoryPlayer, slotID++, 8 + i * 18, 142));
@@ -53,22 +41,19 @@ public class ContainerMagnet extends Container {
 				addSlotToContainer(new Slot(inventoryPlayer, slotID++, 8 + j * 18, 84 + i * 18));
 			}
 		}
-	}
-	
-	public MagnetBlackListItem addBlackListItem() {
-		// Item
-		MagnetBlackListItem item = new MagnetBlackListItem();
-		blackListItems.add(item);
 		
-		// Slot
-		//addSlotToContainer(new GhostSlot(null, blackListSlots.size() + 1, 8, blackListSlots.size() * 17));
+		// Add slots for all blacklist items
+		slotID = 0;
+		int occupiedSlots = invMagnet.getNumberOfOccupiedSlots();
+		LogHelper.info("Container open occupied slots: " + occupiedSlots);
+		for(int i = 0; i < occupiedSlots; i++){
+			addSlotToContainer(new Slot(invMagnet, slotID++, 8, 8 + (17 * i))); 
+		}
 		
-		return item;
-	}
-	
-	public void removeBlackListItem(int i){
-		blackListItems.remove(i);
-		LogHelper.info("Item removed");
+		// Add a slot for the empty 'new item' slot
+		addSlotToContainer(new Slot(invMagnet, slotID++, 8, 8 + (17 * occupiedSlots)));
+		
+		
 	}
 	
 	@Override
@@ -97,13 +82,41 @@ public class ContainerMagnet extends Container {
 		return null;
 	}
 	
+	@Override
+	public ItemStack slotClick(int slotID, int buttonPressed, int flag, EntityPlayer player) {
+		dirty = true;
+		return super.slotClick(slotID, buttonPressed, flag, player);
+	}
+		
+	public boolean needsSaving(){
+		return dirty;
+	}
+		
+	public void save(){
+		LogHelper.info("Saving magnet blacklist");
+		
+		if(!magnetStack.hasTagCompound()){
+			magnetStack.setTagCompound(new NBTTagCompound());
+		}
+		
+		if(!magnetStack.getTagCompound().hasKey("blacklist")){
+			magnetStack.getTagCompound().setTag("blacklist", new NBTTagCompound());
+		}
+		
+		invMagnet.writeToNBT(magnetStack.getTagCompound().getCompoundTag("blacklist"));
+		LogHelper.info("SAVED!");
+		dirty = false;
+	}
+	
+	public void removeItem(int id){
+		invMagnet.setInventorySlotContents(id, null);
+	}
+	
 	public int getBlacklistItemCount(){
-		return blackListItems.size();
+		return invMagnet.getNumberOfOccupiedSlots();
 	}
 	
-	public MagnetBlackListItem getBlackListItem(int i){
-		return blackListItems.get(i);
+	public ItemStack getBlacklistItem(int id){
+		return invMagnet.getStackInSlot(id);
 	}
-
-	
 }

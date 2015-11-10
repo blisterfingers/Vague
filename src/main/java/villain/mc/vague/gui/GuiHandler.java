@@ -10,9 +10,9 @@ import villain.mc.vague.utils.LogHelper;
 public class GuiHandler implements IGuiHandler {
 
 	@Override
-	public Object getServerGuiElement(int id, EntityPlayer player, World world, int magnetSlot, int y, int z) {
+	public Object getServerGuiElement(int id, EntityPlayer player, World world, int x, int y, int z) {
 		if(id == GUIs.MAGNET.ordinal()){
-			return new ContainerMagnet(player.inventory, magnetSlot);
+			return new ContainerMagnet(player.inventory, player.getHeldItem());
 		}
 		else {
 			LogHelper.warn("Can't open GUI.. id not recognised.");
@@ -21,10 +21,10 @@ public class GuiHandler implements IGuiHandler {
 	}
 	
 	@Override
-	public Object getClientGuiElement(int id, EntityPlayer player, World world, int magnetSlot, int y, int z) {
+	public Object getClientGuiElement(int id, EntityPlayer player, World world, int x, int y, int z) {
 		if(id == GUIs.MAGNET.ordinal()){
 			LogHelper.info("opening");
-			return new GuiMagnet(player.inventory, magnetSlot);
+			return new GuiMagnet(player.inventory, player.getHeldItem());
 		}
 		else {
 			LogHelper.warn("Can't open GUI.. id not recognised.");
