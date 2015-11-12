@@ -10,27 +10,24 @@ import villain.mc.vague.utils.LogHelper;
 
 public class InventoryMagnetBlacklist implements IInventory {
 
-	public static final int NUM_SLOTS = 64;
+	public static final int NUM_SLOTS = 20;
 
-	private String name = "Blacklist";
+	private String name = "Magnet Blacklist";
 	private ItemStack[] inventory = new ItemStack[NUM_SLOTS];
+	private boolean[] useMetas = new boolean[NUM_SLOTS];
+	private boolean[] useNBTs = new boolean[NUM_SLOTS];
+	private ItemStack magnetStack;
 
 	public InventoryMagnetBlacklist(ItemStack magnetStack) {
 		super();
+		
+		this.magnetStack = magnetStack;
 
 		// Read inventory contents from NBT
-		LogHelper.info("Loading inventory...");
-		if(magnetStack.hasTagCompound()){
-			if(magnetStack.getTagCompound().hasKey("blacklist")){
-				readFromNBT(magnetStack.getTagCompound().getCompoundTag("blacklist"));
-			}
-			else {
-				LogHelper.info("Loading inventory: Magnet stack's tag doesn't have 'blacklist' entry.");
-			}
+		if(!magnetStack.hasTagCompound()){
+			magnetStack.setTagCompound(new NBTTagCompound());
 		}
-		else {
-			LogHelper.info("Loading inventory: Magnet stack doesn't have tag");
-		}
+		readFromNBT(magnetStack.getTagCompound());
 	}
 
 	@Override
@@ -49,14 +46,11 @@ public class InventoryMagnetBlacklist implements IInventory {
 		if(stack != null){
 			if(stack.stackSize > amount){
 				stack = stack.splitStack(amount);
-				if(stack.stackSize == 0){
-					setInventorySlotContents(slot, null);
-				}
+				markDirty();
 			}
 			else {
-				setInventorySlotContents(slot, null);
+				inventory[slot] = null;
 			}
-			onInventoryChanged();
 		}
 		return stack;
 	}
@@ -64,9 +58,7 @@ public class InventoryMagnetBlacklist implements IInventory {
 	@Override
 	public ItemStack getStackInSlotOnClosing(int slot) {
 		ItemStack stack = getStackInSlot(slot);
-		if(stack != null){
-			setInventorySlotContents(slot, null);
-		}
+		inventory[slot] = null;
 		return stack;
 	}
 	
@@ -76,7 +68,7 @@ public class InventoryMagnetBlacklist implements IInventory {
 		if(stack != null && stack.stackSize > getInventoryStackLimit()){
 			stack.stackSize = getInventoryStackLimit();
 		}
-		onInventoryChanged();
+		markDirty();
 	}
 	
 	@Override
@@ -85,8 +77,24 @@ public class InventoryMagnetBlacklist implements IInventory {
 	}
 	
 	@Override
+	public boolean hasCustomInventoryName() {
+		return true;
+	}
+	
+	@Override
 	public int getInventoryStackLimit() {
 		return 1;
+	}
+	
+	@Override
+	public void markDirty() {
+		for(int i = 0; i < getSizeInventory(); i++){
+			if(getStackInSlot(i) != null && getStackInSlot(i).stackSize == 0){
+				inventory[i] = null;
+			}
+		}
+		
+		writeToNBT(magnetStack.getTagCompound());
 	}
 	
 	@Override
@@ -109,77 +117,66 @@ public class InventoryMagnetBlacklist implements IInventory {
 		return true;
 	}
 	
-	@Override
-	public boolean hasCustomInventoryName() {
-		return true;
-	}
-
-	@Override
-	public void markDirty() {
-		// noop
-	}
-	
 	public void readFromNBT(NBTTagCompound nbt){
-		LogHelper.info("Loading inventory.");
+		LogHelper.info("read");
 		NBTTagList tagList = nbt.getTagList("ItemInventory", NBT.TAG_COMPOUND);
-		LogHelper.info("tag count: " + tagList);
+		
 		for(int i = 0; i < tagList.tagCount(); i++){
 			NBTTagCompound compound = tagList.getCompoundTagAt(i);
-			int b0 = compound.getInteger("slot");
-			if(b0 >= 0 && b0 < getSizeInventory()){
-				setInventorySlotContents(b0, ItemStack.loadItemStackFromNBT(compound));
+			int slot = compound.getInteger("slot");
+			
+			if(slot >= 0 && slot < getSizeInventory()){
+				useMetas[slot] = compound.getBoolean("magnetUseMeta");
+				useNBTs[slot] = compound.getBoolean("magnetUseNBT");
+				inventory[slot] = ItemStack.loadItemStackFromNBT(compound);				
 			}
 		}
 	}
 	
 	public void writeToNBT(NBTTagCompound nbt){
-		LogHelper.info("Saving inventory");
+		LogHelper.info("write");
 		NBTTagList tagList = new NBTTagList();
+		
 		for(int i = 0; i < getSizeInventory(); i++){
-			// only write stacks taht contain items
 			if(getStackInSlot(i) != null){
-				LogHelper.info("Found " + getStackInSlot(i).getDisplayName() + " in slot " + i);
 				NBTTagCompound compound = new NBTTagCompound();
 				compound.setInteger("slot", i);
-				getStackInSlot(i).writeToNBT(compound);
+				compound.setBoolean("magnetUseMeta", useMetas[i]);
+				compound.setBoolean("magnetUseNBT", useNBTs[i]);
+				getStackInSlot(i).writeToNBT(compound);				
 				tagList.appendTag(compound);
 			}
 		}
-		LogHelper.info("Saving tag count: " + tagList.tagCount());
 		nbt.setTag("ItemInventory", tagList);
 	}
 	
-	private void onInventoryChanged(){
-		for(int i = 0; i < getSizeInventory(); i++){
-			if(getStackInSlot(i) != null && getStackInSlot(i).stackSize == 0){
-				setInventorySlotContents(i, null);
-			}
-		}
+	public boolean toggleUseMeta(int slot){
+		useMetas[slot] = !useMetas[slot];
+		markDirty();
+		return useMetas[slot];
 	}
 	
-	public int getNumberOfOccupiedSlots(){
-		int count = 0;
-		for(int i = 0; i < NUM_SLOTS; i++){
-			if(getStackInSlot(i) != null){
-				count++;
-			}
-		}
-		return count;
+	public boolean toggleUseNBT(int slot){
+		useNBTs[slot] = !useNBTs[slot];
+		markDirty();
+		return useNBTs[slot];
 	}
 	
-	public boolean addItem(ItemStack itemStack){
-		int slot = findFirstOpenSlot();
-		if(slot != -1){
-			setInventorySlotContents(slot, itemStack);
-			return true;
-		}
-		return false;
+	public boolean getUseMeta(int slot){
+		return useMetas[slot];
 	}
 	
-	private int findFirstOpenSlot(){
-		for(int i = 0; i < NUM_SLOTS; i++){
-			if(getStackInSlot(i) == null) return i;
-		}
-		return -1;
+	public void setUseMeta(int slot, boolean value){
+		useMetas[slot] = value;
+		markDirty();
+	}
+	
+	public boolean getUseNBT(int slot){
+		return useNBTs[slot];
+	}
+	
+	public void setUseNBT(int slot, boolean value){
+		useNBTs[slot] = value;
+		markDirty();
 	}
 }

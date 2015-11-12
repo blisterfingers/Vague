@@ -27,7 +27,14 @@ public class ItemNBTHelper {
 		stack.stackTagCompound.setBoolean(tag, value);
 	}
 	
-	public static void toggleBool(ItemStack stack, String tag){
-		setBool(stack, tag, !getBool(stack, tag));
+	/**
+	 * @param stack
+	 * @param tag
+	 * @return The newly set value
+	 */
+	public static boolean toggleBool(ItemStack stack, String tag){
+		boolean current = getBool(stack, tag);
+		setBool(stack, tag, !current);
+		return !current;		
 	}
 }

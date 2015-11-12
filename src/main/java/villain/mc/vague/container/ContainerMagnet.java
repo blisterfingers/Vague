@@ -1,80 +1,56 @@
 package villain.mc.vague.container;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import java.util.ArrayList;
+
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
-import net.minecraft.inventory.ICrafting;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import villain.mc.vague.inventory.InventoryMagnetBlacklist;
-import villain.mc.vague.utils.LogHelper;
 
 public class ContainerMagnet extends Container {
 
-	private ItemStack magnetStack;
-	private InventoryMagnetBlacklist invMagnet;
-	private boolean dirty = false;
+	private InventoryMagnetBlacklist inventoryMagnet;
 	
-	public ContainerMagnet(InventoryPlayer inventoryPlayer, ItemStack magnetStack){
+	private final ArrayList<Slot> blacklistSlots = new ArrayList<Slot>();
+	
+	public ContainerMagnet(EntityPlayer player, InventoryPlayer inventoryPlayer, InventoryMagnetBlacklist inventoryMagnet){
 		super();
 		
-		this.magnetStack = magnetStack;
-		
-		LogHelper.info("Container constructor");
-		
-		// Get inventory from magnet
-		invMagnet = new InventoryMagnetBlacklist(magnetStack);
+		this.inventoryMagnet = inventoryMagnet;
 		
 		int slotID = 0;
-				
 		// Hot bar slots
 		for(int i = 0; i < 9; i++){
-			addSlotToContainer(new Slot(inventoryPlayer, slotID++, 8 + i * 18, 142));
+			addSlotToContainer(new Slot(inventoryPlayer, slotID++, 8 + i * 18, 169));
 		}
 		
 		// Inventory Slots
 		for(int i = 0; i < 3; i++){
 			for(int j = 0; j < 9; j++){
-				addSlotToContainer(new Slot(inventoryPlayer, slotID++, 8 + j * 18, 84 + i * 18));
+				addSlotToContainer(new Slot(inventoryPlayer, slotID++, 8 + j * 18, 111 + i * 18));
 			}
 		}
 		
 		// Add slots for all blacklist items
 		slotID = 0;
-		int occupiedSlots = invMagnet.getNumberOfOccupiedSlots();
-		LogHelper.info("Container open occupied slots: " + occupiedSlots);
-		for(int i = 0; i < occupiedSlots; i++){
-			addSlotToContainer(new Slot(invMagnet, slotID++, 8, 8 + (17 * i))); 
+		for(int i = 0; i < inventoryMagnet.getSizeInventory(); i++){
+			int slotX = i < 5 ? 8 : 8 - 1000;
+			int slotY = 8 + (17 * (i % 5));
+			blacklistSlots.add(addSlotToContainer(new Slot(inventoryMagnet, slotID++, slotX, slotY)));
 		}
-		
-		// Add a slot for the empty 'new item' slot
-		addSlotToContainer(new Slot(invMagnet, slotID++, 8, 8 + (17 * occupiedSlots)));
-		
-		
 	}
 	
+	public void setPage(int page){
+		for(int i = 0; i < blacklistSlots.size(); i++){
+			blacklistSlots.get(i).xDisplayPosition = i >= (5 * page) && i < (5 * page) + 5 ? 8 : 8 - 1000;
+		}
+	}
+		
 	@Override
 	public boolean canInteractWith(EntityPlayer entityPlayer) {
-		return true;
-	}
-	
-	@Override
-	public void addCraftingToCrafters(ICrafting iCrafting) {
-		super.addCraftingToCrafters(iCrafting);
-	}
-	
-	@Override
-	public void detectAndSendChanges() {
-		super.detectAndSendChanges();
-	}
-	
-	@SideOnly(Side.CLIENT)
-	@Override
-	public void updateProgressBar(int id, int newValue) {
-		super.updateProgressBar(id, newValue);
+		return inventoryMagnet.isUseableByPlayer(entityPlayer);
 	}
 	
 	@Override
@@ -84,39 +60,92 @@ public class ContainerMagnet extends Container {
 	
 	@Override
 	public ItemStack slotClick(int slotID, int buttonPressed, int flag, EntityPlayer player) {
-		dirty = true;
+		// Prevent interacting with the item that opened the inventory
+		if(slotID >= 0 && getSlot(slotID) != null && getSlot(slotID).getStack() == player.getHeldItem()){
+			return null;
+		}
 		return super.slotClick(slotID, buttonPressed, flag, player);
 	}
+	
+	@Override
+	protected boolean mergeItemStack(ItemStack stack, int start, int end, boolean backwards){
+		boolean flag1 = false;
+		int k = (backwards ? end - 1 : start);
+		Slot slot;
+		ItemStack itemStack1;
 		
-	public boolean needsSaving(){
-		return dirty;
-	}
-		
-	public void save(){
-		LogHelper.info("Saving magnet blacklist");
-		
-		if(!magnetStack.hasTagCompound()){
-			magnetStack.setTagCompound(new NBTTagCompound());
+		if(stack.isStackable()){
+			while(stack.stackSize > 0 && (!backwards && k < end || backwards && k >= start)){
+				slot = (Slot)inventorySlots.get(k);
+				itemStack1 = slot.getStack();
+				
+				if(!slot.isItemValid(stack)){
+					k += (backwards ? -1 : 1);
+					continue;
+				}
+				
+				if(itemStack1 != null && itemStack1.getItem() == stack.getItem() &&
+						(!stack.getHasSubtypes() || stack.getItemDamage() == itemStack1.getItemDamage()) && ItemStack.areItemStacksEqual(stack, itemStack1)){
+					int l = itemStack1.stackSize + stack.stackSize;
+					
+					if(l <= stack.getMaxStackSize() && l <= slot.getSlotStackLimit()){
+						stack.stackSize = 0;
+						itemStack1.stackSize = 1;
+						inventoryMagnet.markDirty();
+						flag1 = true;
+					}
+					else if(itemStack1.stackSize < stack.getMaxStackSize() && l < slot.getSlotStackLimit()){
+						stack.stackSize -= stack.getMaxStackSize() - itemStack1.stackSize;
+						itemStack1.stackSize = stack.getMaxStackSize();
+						inventoryMagnet.markDirty();
+						flag1 = true;
+					}
+				}
+				
+				k += (backwards ? -1 : 1);
+			}
 		}
 		
-		if(!magnetStack.getTagCompound().hasKey("blacklist")){
-			magnetStack.getTagCompound().setTag("blacklist", new NBTTagCompound());
+		if(stack.stackSize > 0){
+			k = (backwards ? end - 1 : start);
+			while(!backwards && k < end || backwards && k >= start){
+				slot = (Slot)inventorySlots.get(k);
+				itemStack1 = slot.getStack();
+				
+				if(!slot.isItemValid(stack)){
+					k += (backwards ? -1 : 1);
+					continue;
+				}
+				
+				if(itemStack1 == null){
+					int l = stack.stackSize;
+					if(l <= slot.getSlotStackLimit()){
+						slot.putStack(stack.copy());
+						stack.stackSize = 0;
+						inventoryMagnet.markDirty();
+						flag1 = true;
+						break;
+					}
+					else {
+						putStackInSlot(k, new ItemStack(stack.getItem(), slot.getSlotStackLimit(), stack.getItemDamage()));
+						stack.stackSize -= slot.getSlotStackLimit();
+						inventoryMagnet.markDirty();
+						flag1 = true;
+					}
+				}
+				
+				k += (backwards ? -1 : 1);
+			}
 		}
 		
-		invMagnet.writeToNBT(magnetStack.getTagCompound().getCompoundTag("blacklist"));
-		LogHelper.info("SAVED!");
-		dirty = false;
+		return flag1;
+	}
+
+	public InventoryMagnetBlacklist getMagnetInventory(){
+		return inventoryMagnet;
 	}
 	
-	public void removeItem(int id){
-		invMagnet.setInventorySlotContents(id, null);
-	}
-	
-	public int getBlacklistItemCount(){
-		return invMagnet.getNumberOfOccupiedSlots();
-	}
-	
-	public ItemStack getBlacklistItem(int id){
-		return invMagnet.getStackInSlot(id);
+	public Slot getBlacklistSlot(int index){
+		return blacklistSlots.get(index);
 	}
 }

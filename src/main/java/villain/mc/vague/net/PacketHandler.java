@@ -12,7 +12,8 @@ public class PacketHandler {
 	
 	public static void initPackets(){
 		net = NetworkRegistry.INSTANCE.newSimpleChannel(Reference.MOD_ID.toUpperCase());
-		registerMessage(MagnetUpdatePacket.class, MagnetUpdatePacket.MagnetUpdateMessage.class, true, false);
+		registerMessage(MagnetCooldownUpdatePacket.class, MagnetCooldownUpdatePacket.MagnetCooldownUpdateMessage.class, true, false);
+		registerMessage(MagnetItemUpdatePacket.class, MagnetItemUpdatePacket.MagnetItemUpdateMessage.class, false, true);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })

@@ -6,44 +6,75 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiContainer;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import villain.mc.vague.Reference;
 import villain.mc.vague.container.ContainerMagnet;
 import villain.mc.vague.inventory.InventoryMagnetBlacklist;
+import villain.mc.vague.net.MagnetItemUpdatePacket;
+import villain.mc.vague.net.PacketHandler;
+import villain.mc.vague.utils.GuiHelper;
 
 @SideOnly(Side.CLIENT)
 public class GuiMagnet extends GuiContainer {
 
-	private ResourceLocation textureResourceLocation;
-	private ContainerMagnet container;
+	private static final int SLOTS_PER_PAGE = 5;
 	
-	public GuiMagnet(InventoryPlayer inventoryPlayer, ItemStack magnetStack){
-		super(new ContainerMagnet(inventoryPlayer, magnetStack));
-		container = (ContainerMagnet)inventorySlots;
-		textureResourceLocation = new ResourceLocation(Reference.MOD_ID, Reference.GUIIMAGE_MAGNET);
+	private ResourceLocation textureResourceLocation = new ResourceLocation(Reference.MOD_ID, Reference.GUIIMAGE_MAGNET);
+	private final InventoryMagnetBlacklist inventory;
+	private final ContainerMagnet container;
+	
+	private int currentPage = 0;
+	
+	public GuiMagnet(ContainerMagnet container){
+		super(container);
+		this.container = container;
+		inventory = container.getMagnetInventory();
+		
+		xSize = 176;
+		ySize = 193;
 	}
 	
 	@Override
 	protected void mouseClicked(int x, int y, int button){
 		super.mouseClicked(x, y, button);
 		
-		// Is the mouse currently over the add button?
-		/*if(x > guiLeft + 145 && x < guiLeft + 145 + 9 &&
-				y > guiTop + 8 + (container.getBlacklistItemCount() * 17) + 3 && y < guiTop + 8 + (container.getBlacklistItemCount() * 17) + 3 + 9){
-			LogHelper.info("Item added");
-			MagnetBlackListItem item = container.addBlackListItem();
+		// Is the mouse over the next/prev buttons?
+		if(GuiHelper.isPointInArea(x, y, guiLeft + 7, guiTop + 97, 18, 10)){
+			currentPage--;
+			if(currentPage < 0){
+				currentPage = (inventory.getSizeInventory() / SLOTS_PER_PAGE) - 1;
+			}
+			container.setPage(currentPage);
 		}
-		else {*/
+		else if(GuiHelper.isPointInArea(x, y, guiLeft + 151, guiTop + 97, 18, 10)){
+			currentPage++;
+			if(currentPage >= (inventory.getSizeInventory() / SLOTS_PER_PAGE)){
+				currentPage = 0;
+			}
+			container.setPage(currentPage);
+		}
 		
 		
-		// Is the mouse over one of the trash cans?
-		for(int i = 0; i < container.getBlacklistItemCount(); i++){
-			if(x >= guiLeft + 8 + 133 && x < guiLeft + 8 + 133 + 16 &&
-					y >= guiTop + 8 + (i * 17) && y < guiTop + 8 + (i * 17) + 16){
-				// Delete this item
-				container.removeItem(i);
+		// Checkboxes
+		for(int i = 0; i < SLOTS_PER_PAGE; i++){
+			if(container.getBlacklistSlot((currentPage * SLOTS_PER_PAGE) + i).getHasStack()){
+				boolean checkBoxClicked = false;
+				
+				if(GuiHelper.isPointInArea(x, y, guiLeft + 30, guiTop + 11 + (i * 17), 10, 10)){
+					inventory.toggleUseMeta((currentPage * SLOTS_PER_PAGE) + i);
+					checkBoxClicked = true;
+				}
+				else if(GuiHelper.isPointInArea(x, y, guiLeft + 92, guiTop + 11 + (i * 17), 10, 10)){
+					inventory.toggleUseNBT((currentPage * SLOTS_PER_PAGE) + i);
+					checkBoxClicked = true;
+				}
+				
+				if(checkBoxClicked){
+					int slot = (currentPage * SLOTS_PER_PAGE) + i;
+					boolean useMeta = inventory.getUseMeta(slot);
+					boolean useNBT = inventory.getUseNBT(slot);
+					PacketHandler.net.sendToServer(new MagnetItemUpdatePacket.MagnetItemUpdateMessage(slot, useMeta, useNBT));
+				}
 			}
 		}
 	}
@@ -57,51 +88,73 @@ public class GuiMagnet extends GuiContainer {
 		// Background
 		drawTexturedModalRect(guiLeft, guiTop, 0, 0, xSize, ySize);
 		
-		// Draw black list items
-		
-		for(int i = 0; i < container.getBlacklistItemCount(); i++){
-			drawBlackListItem(container.getBlacklistItem(i), i * 17, mouseX, mouseY, true);
-		}
-		
-		// Draw open blacklist item
-		if(container.getBlacklistItemCount() < InventoryMagnetBlacklist.NUM_SLOTS){
-			drawBlackListItem(null, (container.getBlacklistItemCount() * 17), mouseX, mouseY, false);
-		}
-		
-		// Draw AddItem
-		//drawAddItem(container.getBlacklistItemCount() * 17, mouseX, mouseY);
-	}
-	
-	private void drawBlackListItem(ItemStack item, int yOffset, int mouseX, int mouseY, boolean trashcan){
-		drawBlackListItemBG(yOffset, mouseX, mouseY, trashcan);
-	}
-	
-	private void drawBlackListItemBG(int yOffset, int mouseX, int mouseY, boolean trashcan){
-		// Draw the list item bg
-		drawTexturedModalRect(guiLeft + 8, guiTop + 8 + yOffset, 0, 166, 149, 17);
-		
-		// Draw the ghost
-		drawTexturedModalRect(guiLeft + 8 + 3, guiTop + 8 + yOffset + 2, 149, 166, 10, 12);
-		
-		// Draw the trash-can
-		if(trashcan){
-			if(mouseX >= guiLeft + 8 + 133 && mouseX < guiLeft + 8 + 133 + 16 &&
-					mouseY >= guiTop + 8 + yOffset && mouseY < guiTop + 8 + yOffset + 16){
-				drawTexturedModalRect(guiLeft + 8 + 136, guiTop + 8 + yOffset + 2, 10, 183, 10, 12);
-			}
-			else {
-				drawTexturedModalRect(guiLeft + 8 + 136, guiTop + 8 + yOffset + 2, 0, 183, 10, 12);
-			}
-		}
-	}
-	
-	/*private void drawAddItem(int yOffset, int mouseX, int mouseY){		
-		if(mouseX >= guiLeft + 145 && mouseX < guiLeft + 145 + 9 &&
-				mouseY >= guiTop + 8 + yOffset + 3 && mouseY < guiTop + 8 + yOffset + 3 + 9){
-			drawTexturedModalRect(guiLeft + 145, guiTop + 8 + yOffset + 3, 168, 175, 9, 9);			
+		// Button Prev
+		if(GuiHelper.isPointInArea(mouseX, mouseY, guiLeft + 7, guiTop + 97, 18, 10)){
+			drawTexturedModalRect(guiLeft + 7, guiTop + 97, 176, 40, 18, 10);
 		}
 		else {
-			drawTexturedModalRect(guiLeft + 145, guiTop + 8 + yOffset + 3, 168, 166, 9, 9);		
+			drawTexturedModalRect(guiLeft + 7, guiTop + 97, 176, 30, 18, 10);
 		}
-	}*/
+		
+		// Button Next
+		if(GuiHelper.isPointInArea(mouseX, mouseY, guiLeft + 151, guiTop + 97, 18, 19)){
+			drawTexturedModalRect(guiLeft + 151, guiTop + 97, 194, 40, 18, 10);
+		}
+		else {
+			drawTexturedModalRect(guiLeft + 151, guiTop + 97, 194, 30, 18, 10);
+		}
+		
+		// Draw blacklist items
+		for(int i = 0; i < SLOTS_PER_PAGE; i++){
+			drawBlackListItemBG((currentPage * SLOTS_PER_PAGE) + i, mouseX, mouseY);
+		}
+		
+		// Page Info
+		String drawString = (currentPage + 1) + "/" + (inventory.getSizeInventory() / SLOTS_PER_PAGE);
+		int stringWidth = fontRendererObj.getStringWidth(drawString);
+		drawString(fontRendererObj, drawString, guiLeft + (xSize / 2) - (stringWidth / 2), guiTop + 98, 0xFFFFFF);
+		
+		// Info
+		for(int i = 0; i < SLOTS_PER_PAGE; i++){
+			if(container.getBlacklistSlot((currentPage * SLOTS_PER_PAGE) + i).getHasStack()){
+				drawString(fontRendererObj, "Use Meta", guiLeft + 43, guiTop + 12 + (i * 17), 0xFFFFFF);
+				drawString(fontRendererObj, "Use NBT", guiLeft + 104, guiTop + 12 + (i * 17), 0xFFFFFF);
+			}
+		}
+	}
+	
+	private void drawBlackListItemBG(int slotIndex, int mouseX, int mouseY){
+		int slotPageIndex = slotIndex - (currentPage * SLOTS_PER_PAGE);
+		boolean hasStack = container.getBlacklistSlot(slotIndex).getHasStack();
+		
+		// Draw the ghost
+		if(!hasStack){
+			drawTexturedModalRect(guiLeft + 11, guiTop + 10 + (slotPageIndex * 17), 176, 0, 10, 12);
+		}
+		
+		//Draw the trash-can
+		if(GuiHelper.isPointInArea(mouseX, mouseY, guiLeft + 152, guiTop + 8 + (slotPageIndex * 17), 16, 16)){
+			drawTexturedModalRect(guiLeft + 155, guiTop + 9 + (slotPageIndex * 17), 186, 0, 10, 13);
+		}
+		
+		// Draw the checkboxes
+		if(hasStack){
+			boolean useMeta = inventory.getUseMeta(slotIndex);
+			boolean useNBT = inventory.getUseNBT(slotIndex);
+			
+			if(GuiHelper.isPointInArea(mouseX, mouseY, guiLeft + 30, guiTop + 11 + (slotPageIndex * 17), 10, 10)){
+				drawTexturedModalRect(guiLeft + 30, guiTop + 11 + (slotPageIndex * 17), useMeta ? 206 : 196, 13, 10, 10);
+			}
+			else {
+				drawTexturedModalRect(guiLeft + 30, guiTop + 11 + (slotPageIndex * 17), useMeta ? 186 : 176, 13, 10, 10);
+			}
+			
+			if(GuiHelper.isPointInArea(mouseX, mouseY, guiLeft + 92, guiTop + 11 + (slotPageIndex * 17), 10, 10)){
+				drawTexturedModalRect(guiLeft + 92, guiTop + 11 + (slotPageIndex * 17), useNBT ? 206 : 196, 13, 10, 10);
+			}
+			else {
+				drawTexturedModalRect(guiLeft + 92, guiTop + 11 + (slotPageIndex * 17), useNBT ? 186 : 176, 13, 10, 10);
+			}
+		}
+	}
 }

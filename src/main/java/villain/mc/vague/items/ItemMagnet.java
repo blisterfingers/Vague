@@ -5,7 +5,6 @@ import java.util.List;
 import codechicken.core.ServerUtils;
 import codechicken.lib.vec.Vector3;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.network.internal.FMLNetworkHandler;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
@@ -22,12 +21,10 @@ import net.minecraftforge.common.util.Constants.NBT;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import villain.mc.vague.Reference;
 import villain.mc.vague.Vague;
-import villain.mc.vague.container.ContainerMagnet;
-import villain.mc.vague.net.MagnetUpdatePacket;
+import villain.mc.vague.net.MagnetCooldownUpdatePacket;
 import villain.mc.vague.net.PacketHandler;
 import villain.mc.vague.utils.EntityHelper;
 import villain.mc.vague.utils.ItemNBTHelper;
-import villain.mc.vague.utils.LogHelper;
 
 public class ItemMagnet extends ItemBase {
 	
@@ -98,21 +95,9 @@ public class ItemMagnet extends ItemBase {
 	public ItemStack onItemRightClick(ItemStack itemStack, World world, EntityPlayer entityPlayer) {
 		if(entityPlayer.isSneaking()){
 			if(!world.isRemote){
-				// What slot does the player have this itemstack in?
-				int magnetSlot = -1;
-				for(int i = 0; i < entityPlayer.inventory.getSizeInventory(); i++){
-					if(entityPlayer.inventory.getStackInSlot(i) == itemStack){
-						magnetSlot = i;
-						break;
-					}
-				}
-				
-				if(magnetSlot == -1){
-					LogHelper.warn("Could not find magnet slot.");
-				}
-				
-				FMLNetworkHandler.openGui(entityPlayer, Vague.instance, Reference.GUIs.MAGNET.ordinal(),
-						world, magnetSlot, 0, 0);
+				entityPlayer.openGui(Vague.instance, Reference.GUIs.MAGNET.ordinal(), world, 0, 0, 0); 
+				/*FMLNetworkHandler.openGui(entityPlayer, Vague.instance, Reference.GUIs.MAGNET.ordinal(),
+						world, 0, 0, 0);*/
 			}
 		}
 		else {
@@ -120,6 +105,11 @@ public class ItemMagnet extends ItemBase {
 			toggleActive(itemStack);
 		}
 		return itemStack;
+	}
+	
+	@Override
+	public int getMaxItemUseDuration(ItemStack stack) {
+		return 1;
 	}
 	
 	@Override
@@ -150,12 +140,12 @@ public class ItemMagnet extends ItemBase {
 		removeOldItemsFromCooldownList(itemStack, world.getWorldTime());
 		
 		// GUI Update
-		if(!world.isRemote && entity instanceof EntityPlayer){
+		/*if(!world.isRemote && entity instanceof EntityPlayer){
 			EntityPlayerMP player = (EntityPlayerMP)entity;
 			if(player.openContainer != null && player.openContainer instanceof ContainerMagnet && ((ContainerMagnet)player.openContainer).needsSaving()){
 				((ContainerMagnet)player.openContainer).save();
 			}
-		}
+		}*/
 	}
 	
 	private boolean canPull(ItemStack magnetStack, EntityItem item){
@@ -224,7 +214,7 @@ public class ItemMagnet extends ItemBase {
 		
 		// Update client's magnet nbt
 		EntityPlayerMP playerMP = ServerUtils.getPlayer(event.player.getDisplayName());
-		PacketHandler.net.sendTo(new MagnetUpdatePacket.MagnetUpdateMessage(magnetSlot, event.entityItem.getEntityId()), playerMP);
+		PacketHandler.net.sendTo(new MagnetCooldownUpdatePacket.MagnetCooldownUpdateMessage(magnetSlot, event.entityItem.getEntityId()), playerMP);
 	}
 	
 	private void removeOldItemsFromCooldownList(ItemStack magnetStack, long worldTime){
