@@ -16,7 +16,7 @@ public class MagnetItemUpdatePacket implements IMessageHandler<MagnetItemUpdateM
 	@Override
 	public IMessage onMessage(MagnetItemUpdateMessage message, MessageContext ctx) {
 		if(ctx.side.isServer()){
-			ItemStack magnetStack = Minecraft.getMinecraft().thePlayer.getHeldItem();
+			ItemStack magnetStack = ctx.getServerHandler().playerEntity.getHeldItem();
 			
 			NBTTagCompound flags = ItemNBTHelper.getCompound(magnetStack, ItemMagnet.TAG_BLACKLISTFLAGS);
 			flags.setBoolean("slot" + message.inventorySlot + "meta", message.useMeta);

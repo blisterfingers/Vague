@@ -18,7 +18,6 @@ public class ItemNBTHelper {
 	
 	public static boolean getBool(ItemStack stack, String tag){
 		if(stack.stackTagCompound == null) return false;
-		if(!stack.stackTagCompound.hasKey(tag)) return false;
 		return stack.stackTagCompound.getBoolean(tag);
 	}
 	
