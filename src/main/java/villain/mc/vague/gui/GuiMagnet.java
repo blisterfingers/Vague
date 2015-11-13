@@ -6,6 +6,8 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import villain.mc.vague.Reference;
 import villain.mc.vague.container.ContainerMagnet;
@@ -13,6 +15,7 @@ import villain.mc.vague.inventory.InventoryMagnetBlacklist;
 import villain.mc.vague.net.MagnetItemUpdatePacket;
 import villain.mc.vague.net.PacketHandler;
 import villain.mc.vague.utils.GuiHelper;
+import villain.mc.vague.utils.ItemNBTHelper;
 
 @SideOnly(Side.CLIENT)
 public class GuiMagnet extends GuiContainer {
@@ -20,14 +23,18 @@ public class GuiMagnet extends GuiContainer {
 	private static final int SLOTS_PER_PAGE = 5;
 	
 	private ResourceLocation textureResourceLocation = new ResourceLocation(Reference.MOD_ID, Reference.GUIIMAGE_MAGNET);
-	private final InventoryMagnetBlacklist inventory;
 	private final ContainerMagnet container;
+	private final ItemStack magnetStack;
+	
+	private final InventoryMagnetBlacklist inventory;
 	
 	private int currentPage = 0;
 	
-	public GuiMagnet(ContainerMagnet container){
+	public GuiMagnet(ContainerMagnet container, ItemStack magnetStack){
 		super(container);
 		this.container = container;
+		this.magnetStack = magnetStack;
+		
 		inventory = container.getMagnetInventory();
 		
 		xSize = 176;
@@ -57,23 +64,31 @@ public class GuiMagnet extends GuiContainer {
 		
 		// Checkboxes
 		for(int i = 0; i < SLOTS_PER_PAGE; i++){
-			if(container.getBlacklistSlot((currentPage * SLOTS_PER_PAGE) + i).getHasStack()){
+			int slotIndex = (currentPage * SLOTS_PER_PAGE) + i;
+			
+			if(container.getBlacklistSlot(slotIndex).getHasStack()){
 				boolean checkBoxClicked = false;
 				
 				if(GuiHelper.isPointInArea(x, y, guiLeft + 30, guiTop + 11 + (i * 17), 10, 10)){
-					inventory.toggleUseMeta((currentPage * SLOTS_PER_PAGE) + i);
+					NBTTagCompound flags = ItemNBTHelper.getCompound(magnetStack, "flags");
+					flags.setBoolean("slot" + slotIndex + "meta", !flags.getBoolean("slot" + slotIndex + "meta"));					
+					ItemNBTHelper.setCompound(magnetStack, "flags", flags);
+					
 					checkBoxClicked = true;
 				}
 				else if(GuiHelper.isPointInArea(x, y, guiLeft + 92, guiTop + 11 + (i * 17), 10, 10)){
-					inventory.toggleUseNBT((currentPage * SLOTS_PER_PAGE) + i);
+					NBTTagCompound flags = ItemNBTHelper.getCompound(magnetStack, "flags");
+					flags.setBoolean("slot" + slotIndex + "nbt", !flags.getBoolean("slot" + slotIndex + "nbt"));
+					ItemNBTHelper.setCompound(magnetStack, "flags", flags);
+					
 					checkBoxClicked = true;
 				}
 				
 				if(checkBoxClicked){
-					int slot = (currentPage * SLOTS_PER_PAGE) + i;
-					boolean useMeta = inventory.getUseMeta(slot);
-					boolean useNBT = inventory.getUseNBT(slot);
-					PacketHandler.net.sendToServer(new MagnetItemUpdatePacket.MagnetItemUpdateMessage(slot, useMeta, useNBT));
+					NBTTagCompound flags = ItemNBTHelper.getCompound(magnetStack, "flags");
+					boolean useMeta = flags.getBoolean("slot" + slotIndex + "meta");
+					boolean useNBT = flags.getBoolean("slot" + slotIndex + "nbt");
+					PacketHandler.net.sendToServer(new MagnetItemUpdatePacket.MagnetItemUpdateMessage(slotIndex, useMeta, useNBT));
 				}
 			}
 		}
@@ -139,8 +154,9 @@ public class GuiMagnet extends GuiContainer {
 		
 		// Draw the checkboxes
 		if(hasStack){
-			boolean useMeta = inventory.getUseMeta(slotIndex);
-			boolean useNBT = inventory.getUseNBT(slotIndex);
+			NBTTagCompound flags = ItemNBTHelper.getCompound(magnetStack, "flags");
+			boolean useMeta = flags.getBoolean("slot" + slotIndex + "meta");
+			boolean useNBT = flags.getBoolean("slot" + slotIndex + "nbt");
 			
 			if(GuiHelper.isPointInArea(mouseX, mouseY, guiLeft + 30, guiTop + 11 + (slotPageIndex * 17), 10, 10)){
 				drawTexturedModalRect(guiLeft + 30, guiTop + 11 + (slotPageIndex * 17), useMeta ? 206 : 196, 13, 10, 10);

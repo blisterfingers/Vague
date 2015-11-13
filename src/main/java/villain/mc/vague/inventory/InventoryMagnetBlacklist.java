@@ -14,8 +14,6 @@ public class InventoryMagnetBlacklist implements IInventory {
 
 	private String name = "Magnet Blacklist";
 	private ItemStack[] inventory = new ItemStack[NUM_SLOTS];
-	private boolean[] useMetas = new boolean[NUM_SLOTS];
-	private boolean[] useNBTs = new boolean[NUM_SLOTS];
 	private ItemStack magnetStack;
 
 	public InventoryMagnetBlacklist(ItemStack magnetStack) {
@@ -118,7 +116,6 @@ public class InventoryMagnetBlacklist implements IInventory {
 	}
 	
 	public void readFromNBT(NBTTagCompound nbt){
-		LogHelper.info("read");
 		NBTTagList tagList = nbt.getTagList("ItemInventory", NBT.TAG_COMPOUND);
 		
 		for(int i = 0; i < tagList.tagCount(); i++){
@@ -126,57 +123,22 @@ public class InventoryMagnetBlacklist implements IInventory {
 			int slot = compound.getInteger("slot");
 			
 			if(slot >= 0 && slot < getSizeInventory()){
-				useMetas[slot] = compound.getBoolean("magnetUseMeta");
-				useNBTs[slot] = compound.getBoolean("magnetUseNBT");
 				inventory[slot] = ItemStack.loadItemStackFromNBT(compound);				
 			}
 		}
 	}
 	
 	public void writeToNBT(NBTTagCompound nbt){
-		LogHelper.info("write");
 		NBTTagList tagList = new NBTTagList();
 		
 		for(int i = 0; i < getSizeInventory(); i++){
 			if(getStackInSlot(i) != null){
 				NBTTagCompound compound = new NBTTagCompound();
 				compound.setInteger("slot", i);
-				compound.setBoolean("magnetUseMeta", useMetas[i]);
-				compound.setBoolean("magnetUseNBT", useNBTs[i]);
 				getStackInSlot(i).writeToNBT(compound);				
 				tagList.appendTag(compound);
 			}
 		}
 		nbt.setTag("ItemInventory", tagList);
-	}
-	
-	public boolean toggleUseMeta(int slot){
-		useMetas[slot] = !useMetas[slot];
-		markDirty();
-		return useMetas[slot];
-	}
-	
-	public boolean toggleUseNBT(int slot){
-		useNBTs[slot] = !useNBTs[slot];
-		markDirty();
-		return useNBTs[slot];
-	}
-	
-	public boolean getUseMeta(int slot){
-		return useMetas[slot];
-	}
-	
-	public void setUseMeta(int slot, boolean value){
-		useMetas[slot] = value;
-		markDirty();
-	}
-	
-	public boolean getUseNBT(int slot){
-		return useNBTs[slot];
-	}
-	
-	public void setUseNBT(int slot, boolean value){
-		useNBTs[slot] = value;
-		markDirty();
 	}
 }

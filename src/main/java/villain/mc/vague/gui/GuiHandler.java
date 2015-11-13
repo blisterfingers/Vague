@@ -24,7 +24,7 @@ public class GuiHandler implements IGuiHandler {
 	@Override
 	public Object getClientGuiElement(int id, EntityPlayer player, World world, int x, int y, int z) {
 		if(id == GUIs.MAGNET.ordinal()){
-			return new GuiMagnet((ContainerMagnet)new ContainerMagnet(player, player.inventory, new InventoryMagnetBlacklist(player.getHeldItem())));
+			return new GuiMagnet(new ContainerMagnet(player, player.inventory, new InventoryMagnetBlacklist(player.getHeldItem())), player.getHeldItem());
 		}
 		else {
 			LogHelper.warn("Can't open GUI.. id not recognised.");

@@ -5,18 +5,25 @@ import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
-import villain.mc.vague.container.ContainerMagnet;
-import villain.mc.vague.inventory.InventoryMagnetBlacklist;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import villain.mc.vague.net.MagnetItemUpdatePacket.MagnetItemUpdateMessage;
+import villain.mc.vague.utils.ItemNBTHelper;
+import villain.mc.vague.utils.LogHelper;
 
 public class MagnetItemUpdatePacket implements IMessageHandler<MagnetItemUpdateMessage, IMessage>{
 
 	@Override
 	public IMessage onMessage(MagnetItemUpdateMessage message, MessageContext ctx) {
 		if(ctx.side.isServer()){
-			InventoryMagnetBlacklist inventory = ((ContainerMagnet)Minecraft.getMinecraft().thePlayer.openContainer).getMagnetInventory();
-			inventory.setUseMeta(message.inventorySlot, message.useMeta);
-			inventory.setUseNBT(message.inventorySlot, message.useNBT);
+			ItemStack magnetStack = Minecraft.getMinecraft().thePlayer.getHeldItem();
+			
+			NBTTagCompound flags = ItemNBTHelper.getCompound(magnetStack, "flags");
+			flags.setBoolean("slot" + message.inventorySlot + "meta", message.useMeta);
+			flags.setBoolean("slot" + message.inventorySlot + "nbt", message.useNBT);
+			ItemNBTHelper.setCompound(magnetStack, "flags", flags);
+			
+			LogHelper.info("Server side updated.");
 		}
 		
 		// return no message

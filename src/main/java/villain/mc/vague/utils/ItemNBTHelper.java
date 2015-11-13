@@ -37,4 +37,14 @@ public class ItemNBTHelper {
 		setBool(stack, tag, !current);
 		return !current;		
 	}
+	
+	public static NBTTagCompound getCompound(ItemStack stack, String tag){
+		checkAndCreateNBT(stack);
+		return stack.getTagCompound().getCompoundTag(tag);
+	}
+	
+	public static void setCompound(ItemStack stack, String tag, NBTTagCompound compound){
+		checkAndCreateNBT(stack);
+		stack.getTagCompound().setTag(tag, compound);
+	}
 }

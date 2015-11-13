@@ -95,9 +95,7 @@ public class ItemMagnet extends ItemBase {
 	public ItemStack onItemRightClick(ItemStack itemStack, World world, EntityPlayer entityPlayer) {
 		if(entityPlayer.isSneaking()){
 			if(!world.isRemote){
-				entityPlayer.openGui(Vague.instance, Reference.GUIs.MAGNET.ordinal(), world, 0, 0, 0); 
-				/*FMLNetworkHandler.openGui(entityPlayer, Vague.instance, Reference.GUIs.MAGNET.ordinal(),
-						world, 0, 0, 0);*/
+				entityPlayer.openGui(Vague.instance, Reference.GUIs.MAGNET.ordinal(), world, 0, 0, 0);
 			}
 		}
 		else {
