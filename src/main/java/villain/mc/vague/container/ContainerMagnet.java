@@ -7,6 +7,7 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import villain.mc.vague.gui.GuiMagnet;
 import villain.mc.vague.inventory.InventoryMagnetBlacklist;
 
 public class ContainerMagnet extends Container {
@@ -36,7 +37,7 @@ public class ContainerMagnet extends Container {
 		// Add slots for all blacklist items
 		slotID = 0;
 		for(int i = 0; i < inventoryMagnet.getSizeInventory(); i++){
-			int slotX = i < 5 ? 8 : 8 - 1000;
+			int slotX = i < 5 ? 8 : i < 10 ? 89 : 8 - 1000;
 			int slotY = 8 + (17 * (i % 5));
 			blacklistSlots.add(addSlotToContainer(new Slot(inventoryMagnet, slotID++, slotX, slotY)));
 		}
@@ -44,7 +45,19 @@ public class ContainerMagnet extends Container {
 	
 	public void setPage(int page){
 		for(int i = 0; i < blacklistSlots.size(); i++){
-			blacklistSlots.get(i).xDisplayPosition = i >= (5 * page) && i < (5 * page) + 5 ? 8 : 8 - 1000;
+			int x;
+			if(i >= GuiMagnet.SLOTS_PER_PAGE * page && i < (GuiMagnet.SLOTS_PER_PAGE * page) + GuiMagnet.SLOTS_PER_PAGE){
+				x = i % GuiMagnet.SLOTS_PER_PAGE < 5 ? 8 : 89;
+			}
+			else {
+				x = -1000;
+			}
+			
+			blacklistSlots.get(i).xDisplayPosition = x;
+			
+			/*blacklistSlots.get(i).xDisplayPosition = 
+					i >= (GuiMagnet.SLOTS_PER_PAGE * page) && 
+					i < (GuiMagnet.SLOTS_PER_PAGE * page) + GuiMagnet.SLOTS_PER_PAGE ? 8 : 8 - 1000;*/
 		}
 	}
 		

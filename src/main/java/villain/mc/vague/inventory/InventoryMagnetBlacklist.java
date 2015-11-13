@@ -10,7 +10,7 @@ import villain.mc.vague.items.ItemMagnet;
 
 public class InventoryMagnetBlacklist implements IInventory {
 
-	public static final int NUM_SLOTS = 20;
+	public static final int NUM_SLOTS = 100;
 
 	private String name = "Magnet Blacklist";
 	private ItemStack[] inventory = new ItemStack[NUM_SLOTS];

@@ -4,7 +4,6 @@ import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import villain.mc.vague.items.ItemMagnet;
@@ -21,6 +20,7 @@ public class MagnetItemUpdatePacket implements IMessageHandler<MagnetItemUpdateM
 			NBTTagCompound flags = ItemNBTHelper.getCompound(magnetStack, ItemMagnet.TAG_BLACKLISTFLAGS);
 			flags.setBoolean("slot" + message.inventorySlot + "meta", message.useMeta);
 			flags.setBoolean("slot" + message.inventorySlot + "nbt", message.useNBT);
+			flags.setBoolean("slot" + message.inventorySlot + "trash", message.useTrash);
 			ItemNBTHelper.setCompound(magnetStack, ItemMagnet.TAG_BLACKLISTFLAGS, flags);
 		}
 		
@@ -31,14 +31,15 @@ public class MagnetItemUpdatePacket implements IMessageHandler<MagnetItemUpdateM
 	public static class MagnetItemUpdateMessage implements IMessage {
 		
 		private int inventorySlot;
-		private boolean useMeta, useNBT;
+		private boolean useMeta, useNBT, useTrash;
 		
 		public MagnetItemUpdateMessage(){ }
 		
-		public MagnetItemUpdateMessage(int inventorySlot, boolean useMeta, boolean useNBT){
+		public MagnetItemUpdateMessage(int inventorySlot, boolean useMeta, boolean useNBT, boolean useTrash){
 			this.inventorySlot = inventorySlot;
 			this.useMeta = useMeta;
 			this.useNBT = useNBT;
+			this.useTrash = useTrash;
 		}
 		
 		@Override
@@ -46,6 +47,7 @@ public class MagnetItemUpdatePacket implements IMessageHandler<MagnetItemUpdateM
 			inventorySlot = buf.readInt();
 			useMeta = buf.readBoolean();
 			useNBT = buf.readBoolean();
+			useTrash = buf.readBoolean();
 		}
 		
 		@Override
@@ -53,6 +55,7 @@ public class MagnetItemUpdatePacket implements IMessageHandler<MagnetItemUpdateM
 			buf.writeInt(inventorySlot);
 			buf.writeBoolean(useMeta);
 			buf.writeBoolean(useNBT);
+			buf.writeBoolean(useTrash);
 		}
 	}
 }
