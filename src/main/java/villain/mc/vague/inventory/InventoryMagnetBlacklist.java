@@ -6,7 +6,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants.NBT;
-import villain.mc.vague.utils.LogHelper;
+import villain.mc.vague.items.ItemMagnet;
 
 public class InventoryMagnetBlacklist implements IInventory {
 
@@ -116,7 +116,7 @@ public class InventoryMagnetBlacklist implements IInventory {
 	}
 	
 	public void readFromNBT(NBTTagCompound nbt){
-		NBTTagList tagList = nbt.getTagList("ItemInventory", NBT.TAG_COMPOUND);
+		NBTTagList tagList = nbt.getTagList(ItemMagnet.TAG_BLACKLISTINVENTORY, NBT.TAG_COMPOUND);
 		
 		for(int i = 0; i < tagList.tagCount(); i++){
 			NBTTagCompound compound = tagList.getCompoundTagAt(i);
@@ -139,6 +139,6 @@ public class InventoryMagnetBlacklist implements IInventory {
 				tagList.appendTag(compound);
 			}
 		}
-		nbt.setTag("ItemInventory", tagList);
+		nbt.setTag(ItemMagnet.TAG_BLACKLISTINVENTORY, tagList);
 	}
 }

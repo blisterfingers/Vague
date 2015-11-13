@@ -53,7 +53,8 @@ public class ItemMagnet extends ItemBase {
 	
 	private static final String TAG_ACTIVE_BOOL = "active";
 	private static final String TAG_COOLDOWNLIST_TAG = "cooldownlist";
-	public static final String TAG_BLACKLIST_TAG = "blacklist";
+	public static final String TAG_BLACKLISTINVENTORY = "blacklistinventory";
+	public static final String TAG_BLACKLISTFLAGS = "blacklistflags";
 
 	private IIcon iconActive;
 	

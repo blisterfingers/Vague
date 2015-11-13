@@ -39,7 +39,7 @@ public class ItemNBTHelper {
 	}
 	
 	public static NBTTagCompound getCompound(ItemStack stack, String tag){
-		checkAndCreateNBT(stack);
+		checkAndCreateNBT(stack);		
 		return stack.getTagCompound().getCompoundTag(tag);
 	}
 	

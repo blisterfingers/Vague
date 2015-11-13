@@ -7,9 +7,9 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import villain.mc.vague.items.ItemMagnet;
 import villain.mc.vague.net.MagnetItemUpdatePacket.MagnetItemUpdateMessage;
 import villain.mc.vague.utils.ItemNBTHelper;
-import villain.mc.vague.utils.LogHelper;
 
 public class MagnetItemUpdatePacket implements IMessageHandler<MagnetItemUpdateMessage, IMessage>{
 
@@ -18,12 +18,10 @@ public class MagnetItemUpdatePacket implements IMessageHandler<MagnetItemUpdateM
 		if(ctx.side.isServer()){
 			ItemStack magnetStack = Minecraft.getMinecraft().thePlayer.getHeldItem();
 			
-			NBTTagCompound flags = ItemNBTHelper.getCompound(magnetStack, "flags");
+			NBTTagCompound flags = ItemNBTHelper.getCompound(magnetStack, ItemMagnet.TAG_BLACKLISTFLAGS);
 			flags.setBoolean("slot" + message.inventorySlot + "meta", message.useMeta);
 			flags.setBoolean("slot" + message.inventorySlot + "nbt", message.useNBT);
-			ItemNBTHelper.setCompound(magnetStack, "flags", flags);
-			
-			LogHelper.info("Server side updated.");
+			ItemNBTHelper.setCompound(magnetStack, ItemMagnet.TAG_BLACKLISTFLAGS, flags);
 		}
 		
 		// return no message

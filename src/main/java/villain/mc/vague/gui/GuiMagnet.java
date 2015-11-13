@@ -12,6 +12,7 @@ import net.minecraft.util.ResourceLocation;
 import villain.mc.vague.Reference;
 import villain.mc.vague.container.ContainerMagnet;
 import villain.mc.vague.inventory.InventoryMagnetBlacklist;
+import villain.mc.vague.items.ItemMagnet;
 import villain.mc.vague.net.MagnetItemUpdatePacket;
 import villain.mc.vague.net.PacketHandler;
 import villain.mc.vague.utils.GuiHelper;
@@ -70,22 +71,22 @@ public class GuiMagnet extends GuiContainer {
 				boolean checkBoxClicked = false;
 				
 				if(GuiHelper.isPointInArea(x, y, guiLeft + 30, guiTop + 11 + (i * 17), 10, 10)){
-					NBTTagCompound flags = ItemNBTHelper.getCompound(magnetStack, "flags");
+					NBTTagCompound flags = ItemNBTHelper.getCompound(magnetStack, ItemMagnet.TAG_BLACKLISTFLAGS);
 					flags.setBoolean("slot" + slotIndex + "meta", !flags.getBoolean("slot" + slotIndex + "meta"));					
-					ItemNBTHelper.setCompound(magnetStack, "flags", flags);
+					ItemNBTHelper.setCompound(magnetStack, ItemMagnet.TAG_BLACKLISTFLAGS, flags);
 					
 					checkBoxClicked = true;
 				}
 				else if(GuiHelper.isPointInArea(x, y, guiLeft + 92, guiTop + 11 + (i * 17), 10, 10)){
-					NBTTagCompound flags = ItemNBTHelper.getCompound(magnetStack, "flags");
+					NBTTagCompound flags = ItemNBTHelper.getCompound(magnetStack, ItemMagnet.TAG_BLACKLISTFLAGS);
 					flags.setBoolean("slot" + slotIndex + "nbt", !flags.getBoolean("slot" + slotIndex + "nbt"));
-					ItemNBTHelper.setCompound(magnetStack, "flags", flags);
+					ItemNBTHelper.setCompound(magnetStack, ItemMagnet.TAG_BLACKLISTFLAGS, flags);
 					
 					checkBoxClicked = true;
 				}
 				
 				if(checkBoxClicked){
-					NBTTagCompound flags = ItemNBTHelper.getCompound(magnetStack, "flags");
+					NBTTagCompound flags = ItemNBTHelper.getCompound(magnetStack, ItemMagnet.TAG_BLACKLISTFLAGS);
 					boolean useMeta = flags.getBoolean("slot" + slotIndex + "meta");
 					boolean useNBT = flags.getBoolean("slot" + slotIndex + "nbt");
 					PacketHandler.net.sendToServer(new MagnetItemUpdatePacket.MagnetItemUpdateMessage(slotIndex, useMeta, useNBT));
@@ -154,7 +155,7 @@ public class GuiMagnet extends GuiContainer {
 		
 		// Draw the checkboxes
 		if(hasStack){
-			NBTTagCompound flags = ItemNBTHelper.getCompound(magnetStack, "flags");
+			NBTTagCompound flags = ItemNBTHelper.getCompound(magnetStack, ItemMagnet.TAG_BLACKLISTFLAGS);
 			boolean useMeta = flags.getBoolean("slot" + slotIndex + "meta");
 			boolean useNBT = flags.getBoolean("slot" + slotIndex + "nbt");
 			
