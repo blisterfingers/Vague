@@ -1,5 +1,6 @@
 package villain.mc.vague;
 
+import cpw.mods.fml.common.registry.EntityRegistry;
 import cpw.mods.fml.common.registry.GameRegistry;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
@@ -7,11 +8,19 @@ import villain.mc.vague.blocks.BlockTipharesPlant;
 import villain.mc.vague.blocks.BlockUncertaintyBorder;
 import villain.mc.vague.blocks.tests.BlockConnectedTest;
 import villain.mc.vague.blocks.tests.BlockNumBlock;
+import villain.mc.vague.entities.EntityGrenade;
+import villain.mc.vague.items.ItemFiringPin;
+import villain.mc.vague.items.ItemGrenade;
+import villain.mc.vague.items.ItemGrenadeCasing;
+import villain.mc.vague.items.ItemIronNugget;
 import villain.mc.vague.items.ItemMagnet;
+import villain.mc.vague.items.ItemPin;
 import villain.mc.vague.items.ItemTestThing;
 import villain.mc.vague.items.ItemTipharesEmbryo;
 import villain.mc.vague.tileents.TileEntityTipharesPlant;
 import villain.mc.vague.tileents.TileEntityUncertaintyBorder;
+import villain.mc.vague.utils.Schematic;
+import villain.mc.vague.utils.SchematicHelper;
 
 public class Init {
 
@@ -29,8 +38,20 @@ public class Init {
 	// Items
 	public static ItemMagnet itemMagnet;
 	public static ItemTipharesEmbryo itemTipharesEmbryo;
+	
+	public static ItemGrenadeCasing grenadeCasing;
+	public static ItemFiringPin firingPin;
+	public static ItemIronNugget ironNugget;
+	public static ItemPin pin;
+	public static ItemGrenade[] grenades;
+	
+	// Entities
+	private static int modEntityID = 0;
+	
+	// Misc
+	public static Schematic shelterGrenadeSchematic;
 		
-	public static void initItems(){
+	public static void initAll(){
 		// Test Blocks
 		blockNumBlock = new BlockNumBlock();
 		blockConnectedTest = new BlockConnectedTest();
@@ -46,9 +67,26 @@ public class Init {
 		itemMagnet = new ItemMagnet();
 		itemTipharesEmbryo = new ItemTipharesEmbryo();
 		
+		grenadeCasing = new ItemGrenadeCasing();
+		firingPin = new ItemFiringPin();
+		ironNugget = new ItemIronNugget();
+		pin = new ItemPin();
+		grenades = new ItemGrenade[]{
+				new ItemGrenade(ItemGrenade.TYPE_NORMAL),
+				new ItemGrenade(ItemGrenade.TYPE_CLUSTER),
+				new ItemGrenade(ItemGrenade.TYPE_SPONGE),
+				new ItemGrenade(ItemGrenade.TYPE_TORCH),
+				new ItemGrenade(ItemGrenade.TYPE_SHELTER)};
+		
+		// Entities
+		EntityRegistry.registerModEntity(EntityGrenade.class, "Grenade", modEntityID++, Vague.instance, 128, 2, true);
+		
 		// TileEntities
 		GameRegistry.registerTileEntity(TileEntityUncertaintyBorder.class, "TileEntityUncertaintyBorder");
 		GameRegistry.registerTileEntity(TileEntityTipharesPlant.class, "TileEntityTipharesPlant");
+		
+		// Misc
+		shelterGrenadeSchematic = SchematicHelper.loadSchematic("hideout");
 	}
 	
 	// Creative Tabs

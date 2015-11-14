@@ -4,6 +4,17 @@ itemGroup.vague=V.A.G.U.E
 item.vague:testthing.name=Test Thing
 item.vague:magnet.name=Magnet
 item.vague:tipharesembyro.name=Tiphares Embryo
+item.vague:grenadecasing.name=Grenade Casing
+item.vague:firingpin.name=Firing Pin
+item.vague:ironnugget.name=Iron Nugget
+item.vague:pin.name=Pin
+item.vague:grenadefrag.name=Frag Grenade
+item.vague:grenadecluster.name=Cluster Grenade
+item.vague:grenadespongue.name=Sponge Grenade
+item.vague:grenadetorch.name=Torch Grenade
+
+
+
 tile.vague:uncertaintyborder.name=Rigidly Defined Area of Doubt and Uncertainty
 tile.vague:numblock.name=Number Block
 tile.vague:connectedtest.name=Connected Textures Test Block

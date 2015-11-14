@@ -1,5 +1,9 @@
 package villain.mc.vague.proxy;
 
+import cpw.mods.fml.client.registry.RenderingRegistry;
+import villain.mc.vague.entities.EntityGrenade;
+import villain.mc.vague.rendering.RenderGrenade;
+
 public class ClientProxy extends CommonProxy {
 
 	@Override
@@ -11,6 +15,6 @@ public class ClientProxy extends CommonProxy {
 	}
 	
 	private static void registerRenderers(){
-		
+		RenderingRegistry.registerEntityRenderingHandler(EntityGrenade.class, new RenderGrenade());
 	}
 }

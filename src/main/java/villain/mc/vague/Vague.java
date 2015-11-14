@@ -23,7 +23,7 @@ public class Vague {
 		proxy.preInit();
 		
 		// Register
-		Init.initItems();
+		Init.initAll();
 		
 		// GUI
 		NetworkRegistry.INSTANCE.registerGuiHandler(this, new GuiHandler());
