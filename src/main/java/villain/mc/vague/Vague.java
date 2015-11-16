@@ -2,6 +2,8 @@ package villain.mc.vague;
 
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.SidedProxy;
+import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.network.NetworkRegistry;
 import villain.mc.vague.gui.GuiHandler;
@@ -30,5 +32,15 @@ public class Vague {
 		
 		// Net
 		PacketHandler.initPackets();
+	}
+	
+	@Mod.EventHandler
+	public void init(FMLInitializationEvent event){
+		proxy.init();
+	}
+	
+	@Mod.EventHandler
+	public void postInit(FMLPostInitializationEvent event){
+		proxy.postInit();
 	}
 }
