@@ -96,7 +96,7 @@ public class TileEntityTipharesPlant extends TileEntity {
 							double value = normalise(noise[x * y * z], min, max);
 							
 							// multiply by distance to centre
-							double centreXMul = ((((double)x - (double)RADIUS) / (double)RADIUS) + 1.0) / 2.0;
+							/*double centreXMul = ((((double)x - (double)RADIUS) / (double)RADIUS) + 1.0) / 2.0;
 							double centreYMul = ((((double)y - (double)RADIUS) / (double)RADIUS) + 1.0) / 2.0;
 							double centreZMul = ((((double)z - (double)RADIUS) / (double)RADIUS) + 1.0) / 2.0;
 							
@@ -109,7 +109,7 @@ public class TileEntityTipharesPlant extends TileEntity {
 							//LogHelper.info("value: " + value + ", centreFalloff: " + centreFalloff + ", dens: "  + density);
 							double density = value * (1.0 - centreMul);
 							//LogHelper.info(density);
-							
+*/							
 							if(value > 0.2){
 								// Shunt this one
 								int wx = xCoord - RADIUS + x;
