@@ -52,7 +52,8 @@ public class SchematicHelper {
 			for(int z = 0; z < schematic.getLength(); z++){
 				for(int x = 0; x < schematic.getWidth(); x++){
 					block = Block.getBlockById(schematic.getBlocks()[i]);
-					if(!(block instanceof BlockAir) && !(block instanceof BlockDoor) && !(block instanceof BlockBed)){
+					if(!(block instanceof BlockAir) && !(block instanceof BlockDoor) 
+							&& !(block instanceof BlockBed) && !(block instanceof BlockStairs)){
 						world.setBlock(startX + x, baseY + y, startZ + z, block);
 						world.setBlockMetadataWithNotify(startX + x, baseY + y, startZ + z, schematic.getData()[i], 3);
 					}
@@ -66,8 +67,7 @@ public class SchematicHelper {
 			for(int z = 0; z < schematic.getLength(); z++){
 				for(int x = 0; x < schematic.getWidth(); x++){
 					block = Block.getBlockById(schematic.getBlocks()[i]);
-					
-					if(block instanceof BlockDoor || block instanceof BlockBed){
+					if(block instanceof BlockDoor || block instanceof BlockBed || block instanceof BlockStairs){
 						world.setBlock(startX + x, baseY + y, startZ + z, block);
 						world.setBlockMetadataWithNotify(startX + x, baseY + y, startZ + z, schematic.getData()[i], 3);
 					}

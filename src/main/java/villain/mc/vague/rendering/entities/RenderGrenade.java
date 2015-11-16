@@ -1,4 +1,4 @@
-package villain.mc.vague.rendering;
+package villain.mc.vague.rendering.entities;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;

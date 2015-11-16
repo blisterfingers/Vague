@@ -27,8 +27,6 @@ public class EntityGrenade extends EntityThrowable {
 	private static final boolean IS_SMOKING = true;
 	private static final int SPONGE_RANGE = 9;
 	private static final int TORCH_RANGE = 9;
-	private static final int SHELTER_SIZE = 9;
-	private static final int SHELTER_HEIGHT = 5;
 	
 	private static final Random random = new Random();
 	
@@ -128,7 +126,7 @@ public class EntityGrenade extends EntityThrowable {
 				explodeTorch();
 				break;
 			case ItemGrenade.TYPE_SHELTER:
-				explodeShelter2();
+				explodeShelter();
 				break;
 		}
 		setDead();
@@ -287,71 +285,8 @@ public class EntityGrenade extends EntityThrowable {
 			setDead();
 		}
 	}
-	
+		
 	private void explodeShelter(){
-		if(!worldObj.isRemote){
-			
-			int centreX = MathHelper.floor_double(posX);
-			int centreZ = MathHelper.floor_double(posZ);
-			int floorY = MathHelper.floor_double(posY) - 1;
-			
-			
-			
-			// Walls
-			for(int x = 0; x < SHELTER_SIZE; x++){
-				for(int z = 0; z < SHELTER_SIZE; z++){
-					for(int y = -1; y < SHELTER_HEIGHT; y++){
-						if(y != SHELTER_HEIGHT - 1 && (x == 0 || x == SHELTER_SIZE - 1 || z == 0 || z == SHELTER_SIZE - 1)){
-							worldObj.setBlock(MathHelper.floor_double(posX) - 4 + x, MathHelper.floor_double(posY) + y, MathHelper.floor_double(posZ) - 4 + z, Blocks.log);
-						}
-						else if(y == -1){
-							worldObj.setBlock(MathHelper.floor_double(posX) - 4 + x, MathHelper.floor_double(posY) + y, MathHelper.floor_double(posZ) - 4 + z, Blocks.planks);
-						}
-						else if(y == SHELTER_HEIGHT - 1 && (x == 0 || z == 0 || x == SHELTER_SIZE - 1 || z == SHELTER_SIZE - 1)){
-							worldObj.setBlock(MathHelper.floor_double(posX) - 4 + x, MathHelper.floor_double(posY) + y, MathHelper.floor_double(posZ) - 4 + z, Blocks.planks);
-						}
-						else {
-							worldObj.setBlockToAir(MathHelper.floor_double(posX) - 4 + x, MathHelper.floor_double(posY) + y, MathHelper.floor_double(posZ) - 4 + z);
-						}
-					}
-				}
-			}
-			
-			// Stairs
-			int size = SHELTER_SIZE + 2;
-			for(int y = 0; y < 5; y++){
-				for(int x = -1; x < SHELTER_SIZE + 1; x++){
-					for(int z = -1; z < SHELTER_SIZE + 1; z++){
-						
-					}
-				}
-				size -= 2;
-			}
-			
-			
-			/*for(int x = -1; x < SHELTER_SIZE + 1; x++){
-				for(int z = -1; z < SHELTER_SIZE + 1; z++){
-					if(x == -1 || x == SHELTER_SIZE){
-						worldObj.setBlock(MathHelper.floor_double(posX) - 4 + x, MathHelper.floor_double(posY) + SHELTER_HEIGHT - 1, MathHelper.floor_double(posZ) - 4 + z, Blocks.oak_stairs);
-						if(x == SHELTER_SIZE){
-							worldObj.setBlockMetadataWithNotify(MathHelper.floor_double(posX) - 4 + x, MathHelper.floor_double(posY) + SHELTER_HEIGHT - 1, MathHelper.floor_double(posZ) - 4 + z,
-									1, 3);
-						}
-					}
-					else if(z == -1 || z == SHELTER_SIZE){
-						worldObj.setBlock(MathHelper.floor_double(posX) - 4 + x, MathHelper.floor_double(posY) + SHELTER_HEIGHT - 1, MathHelper.floor_double(posZ) - 4 + z, Blocks.oak_stairs);
-						worldObj.setBlockMetadataWithNotify(MathHelper.floor_double(posX) - 4 + x, MathHelper.floor_double(posY) + SHELTER_HEIGHT - 1, MathHelper.floor_double(posZ) - 4 + z,
-								z == -1 ? 2 : 3, 3);
-					}
-				}
-			}*/
-			
-			
-			
-		}
-	}
-	
-	private void explodeShelter2(){
 		SchematicHelper.placeSchematic(worldObj, Init.shelterGrenadeSchematic, MathHelper.floor_double(posX), MathHelper.floor_double(posY),
 				MathHelper.floor_double(posZ));
 	}

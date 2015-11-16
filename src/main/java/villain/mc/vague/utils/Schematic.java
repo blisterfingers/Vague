@@ -1,7 +1,5 @@
 package villain.mc.vague.utils;
 
-import java.util.HashMap;
-
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 
