@@ -7,6 +7,7 @@ import net.minecraft.block.BlockAir;
 import net.minecraft.block.BlockBed;
 import net.minecraft.block.BlockDoor;
 import net.minecraft.block.BlockStairs;
+import net.minecraft.block.BlockTorch;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
@@ -43,6 +44,7 @@ public class SchematicHelper {
 	}	
 	
 	public static void placeSchematic(World world, Schematic schematic, int centreX, int baseY, int centreZ){
+		LogHelper.info("schematic: " + schematic);
 		int startX = centreX - (schematic.getWidth() / 2);
 		int startZ = centreZ - (schematic.getLength() / 2);
 		
@@ -52,8 +54,12 @@ public class SchematicHelper {
 			for(int z = 0; z < schematic.getLength(); z++){
 				for(int x = 0; x < schematic.getWidth(); x++){
 					block = Block.getBlockById(schematic.getBlocks()[i]);
-					if(!(block instanceof BlockAir) && !(block instanceof BlockDoor) 
-							&& !(block instanceof BlockBed) && !(block instanceof BlockStairs)){
+					LogHelper.info("schematic block " + i + " id: " + schematic.getBlocks()[i] + " block: " + block);
+					if(!(block instanceof BlockAir) && 
+							!(block instanceof BlockDoor) && 
+							!(block instanceof BlockBed) && 
+							!(block instanceof BlockStairs) && 
+							!(block instanceof BlockTorch)){
 						world.setBlock(startX + x, baseY + y, startZ + z, block);
 						world.setBlockMetadataWithNotify(startX + x, baseY + y, startZ + z, schematic.getData()[i], 3);
 					}
@@ -67,7 +73,10 @@ public class SchematicHelper {
 			for(int z = 0; z < schematic.getLength(); z++){
 				for(int x = 0; x < schematic.getWidth(); x++){
 					block = Block.getBlockById(schematic.getBlocks()[i]);
-					if(block instanceof BlockDoor || block instanceof BlockBed || block instanceof BlockStairs){
+					if(block instanceof BlockDoor || 
+							block instanceof BlockBed || 
+							block instanceof BlockStairs || 
+							block instanceof BlockTorch){
 						world.setBlock(startX + x, baseY + y, startZ + z, block);
 						world.setBlockMetadataWithNotify(startX + x, baseY + y, startZ + z, schematic.getData()[i], 3);
 					}

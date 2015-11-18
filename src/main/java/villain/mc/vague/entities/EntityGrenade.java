@@ -70,7 +70,7 @@ public class EntityGrenade extends EntityThrowable {
 			if(Math.abs(motionX) < 0.1 && Math.abs(motionY) < 0.1 && Math.abs(motionZ) < 0.1){
 				age++;
 				if(age > lifespan){
-					explode();
+					if(!worldObj.isRemote) explode();
 				}
 			}
 			else {
@@ -287,6 +287,7 @@ public class EntityGrenade extends EntityThrowable {
 	}
 		
 	private void explodeShelter(){
+		
 		SchematicHelper.placeSchematic(worldObj, Init.shelterGrenadeSchematic, MathHelper.floor_double(posX), MathHelper.floor_double(posY),
 				MathHelper.floor_double(posZ));
 	}

@@ -4,6 +4,9 @@ import java.util.ArrayList;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -58,6 +61,23 @@ public class BlockTipharesPlant extends BlockCropBase implements ITileEntityProv
 		}
 		
 		LogHelper.warn("TipharesPlant: Could not find master entity.");
+	}
+	
+	@Override
+	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
+		if(player.getHeldItem().getItem() == Items.diamond){
+			TileEntityTipharesPlant tiphEntity = (TileEntityTipharesPlant)world.getTileEntity(x, y, z);
+			if(tiphEntity == null) return false;
+			
+			player.getHeldItem().stackSize--;
+			if(player.getHeldItem().stackSize == 0){
+				player.setCurrentItemOrArmor(0, null);
+			}
+			
+			tiphEntity.applyDiamond();
+		}
+		
+		return false;
 	}
 	
 	@Override

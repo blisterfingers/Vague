@@ -1,5 +1,7 @@
 package villain.mc.vague.blocks;
 
+import java.util.ArrayList;
+
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.EntityLivingBase;
@@ -10,6 +12,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 import villain.mc.vague.Init;
+import villain.mc.vague.items.ItemLanternSlide;
 import villain.mc.vague.tileents.TileEntityLanternaMagica;
 import villain.mc.vague.utils.EntityHelper;
 
@@ -50,18 +53,19 @@ public class BlockLanternaMagica extends BlockBase implements ITileEntityProvide
 				lanternEntity.setSlideStack(null);
 			}
 			else {
-				// Shift/Expand
+				/* Shift/Expand
 				ForgeDirection dir = ForgeDirection.getOrientation(side);				
 				if(!entityPlayer.isSneaking()){
 					lanternEntity.shift(dir);
 				}
 				else {
 					lanternEntity.expand(dir);
-				}
+				}*/
 			}
 			return true;
 		}
-		else if(entityPlayer.getHeldItem().getItem() == Init.itemLanternSlide){
+		else if(entityPlayer.getHeldItem().getItem() == Init.itemLanternSlide16 || entityPlayer.getHeldItem().getItem() == Init.itemLanternSlide32 ||
+				entityPlayer.getHeldItem().getItem() == Init.itemLanternSlide64){
 			// Does the Lantern already have an item?
 			if(lanternEntity.hasSlideStack()){
 				// Add the lantern's item to the player's inventory
@@ -71,6 +75,11 @@ public class BlockLanternaMagica extends BlockBase implements ITileEntityProvide
 				}
 			}
 			else {
+				
+				/* Does this slide have an owner set?
+				ArrayList<String> owners = ItemLanternSlide.getOwners(entityPlayer.getHeldItem());
+				if(owners == null || owners.size() == 0) return false;*/
+				
 				// Remove the item from the player's inventory
 				ItemStack slideStack = entityPlayer.getHeldItem().splitStack(1);
 				if(entityPlayer.getHeldItem().stackSize == 0){

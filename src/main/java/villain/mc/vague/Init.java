@@ -42,7 +42,9 @@ public class Init {
 	// Items
 	public static ItemMagnet itemMagnet;
 	public static ItemTipharesEmbryo itemTipharesEmbryo;
-	public static ItemLanternSlide itemLanternSlide;
+	public static ItemLanternSlide itemLanternSlide16;
+	public static ItemLanternSlide itemLanternSlide32;
+	public static ItemLanternSlide itemLanternSlide64;
 	
 	public static ItemGrenadeCasing grenadeCasing;
 	public static ItemFiringPin firingPin;
@@ -72,7 +74,9 @@ public class Init {
 		// Items
 		itemMagnet = new ItemMagnet();
 		itemTipharesEmbryo = new ItemTipharesEmbryo();
-		itemLanternSlide = new ItemLanternSlide();
+		itemLanternSlide16 = new ItemLanternSlide((byte)0);
+		itemLanternSlide32 = new ItemLanternSlide((byte)1);
+		itemLanternSlide64 = new ItemLanternSlide((byte)2);
 		
 		grenadeCasing = new ItemGrenadeCasing();
 		firingPin = new ItemFiringPin();
@@ -94,7 +98,7 @@ public class Init {
 		GameRegistry.registerTileEntity(TileEntityLanternaMagica.class, "TileEntityLanternaMagica");
 		
 		// Misc
-		shelterGrenadeSchematic = SchematicHelper.loadSchematic("hideout");
+		shelterGrenadeSchematic = SchematicHelper.loadSchematic("darklogtest");
 	}
 	
 	// Creative Tabs

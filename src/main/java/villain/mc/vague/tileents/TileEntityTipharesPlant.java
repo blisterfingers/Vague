@@ -5,21 +5,22 @@ import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.gen.NoiseGeneratorOctaves;
+import villain.mc.vague.Init;
 import villain.mc.vague.blocks.BlockTipharesPlant;
 import villain.mc.vague.utils.LogHelper;
 
 public class TileEntityTipharesPlant extends TileEntity {
 	
-	private final int RADIUS = 32;
+	private final int RADIUS = 16;
+	private final int MIN_HEIGHT = 8;
 
 	private boolean isMaster;
 	private boolean hasMaster;
 	private int masterX, masterY, masterZ;
+	private boolean genned = false;
+	private boolean diamondApplied = false;
 	
 	private NoiseGeneratorOctaves noiseGen;
-	
-	// Test
-	private boolean genned = false;
 	
 	public TileEntityTipharesPlant(){
 		super();
@@ -59,88 +60,121 @@ public class TileEntityTipharesPlant extends TileEntity {
 		super.updateEntity();
 		
 		if(!worldObj.isRemote){
-			int metadata = worldObj.getBlockMetadata(xCoord, yCoord, zCoord);
-			if(isMaster && metadata >= BlockTipharesPlant.STAGES - 1 && !genned){
-				LogHelper.info("upd");
-				
-				// Do it one big lump!
-				double[] noise = noiseGen.generateNoiseOctaves(null, 0, 0, 0, RADIUS * 2, RADIUS * 2, RADIUS * 2, 1, 1, 1);
-				
-				double min = Double.MAX_VALUE;
-				double max = -Double.MAX_VALUE;
-				
-				// Loop to find min/max values
-				for(int y = 0; y < RADIUS * 2; y++){
-					for(int x = 0; x < RADIUS * 2; x++){
-						for(int z = 0; z < RADIUS * 2; z++){
-							double n = noise[x * y * z];
-							if(n < min) min = n;
-							if(n > max) max = n;
-						}
-					}
+			if(isMaster && !genned && diamondApplied){
+				// Check the height of the current plant stack
+				Block b = worldObj.getBlock(xCoord, yCoord + 1, zCoord);
+				int c = 1;
+				while(b == Init.blockTipharesPlant){
+					c++;
+					b = worldObj.getBlock(xCoord, yCoord + c, zCoord);
 				}
 				
-				// Loop again
-				Block[] blocks = new Block[(RADIUS * 2) * (RADIUS * 2) * (RADIUS * 2)];
-				for(int y = 0; y < RADIUS * 2; y++){
-					for(int x = 0; x < RADIUS * 2; x++){
-						for(int z = 0; z < RADIUS * 2; z++){
-							blocks[x * y * z] = worldObj.getBlock(xCoord - RADIUS + x, yCoord - RADIUS + y, zCoord - RADIUS + z);
-						}
+				if(c > MIN_HEIGHT){
+					gen2(c);
+					genned = true;
+				}
+			}
+		}
+	}
+	
+	private void gen(){
+		int fullSize = RADIUS * 2;
+		Block[][][] blocks = new Block[fullSize][fullSize][fullSize];
+		int[][][] metas = new int[fullSize][fullSize][fullSize];
+		
+		for(int y = -RADIUS; y < RADIUS; y++){
+			for(int x = -RADIUS; x < RADIUS; x++){
+				for(int z = -RADIUS; z < RADIUS; z++){
+					blocks[x + RADIUS][y + RADIUS][z + RADIUS] = worldObj.getBlock(xCoord + x, yCoord + y, zCoord + z);
+					metas[x + RADIUS][y + RADIUS][z + RADIUS] = worldObj.getBlockMetadata(xCoord + x, yCoord + y, zCoord + z);
+				}
+			}
+		}
+		
+		for(int y = -RADIUS; y < RADIUS; y++){
+			for(int x = -RADIUS; x < RADIUS; x++){
+				for(int z = -RADIUS; z < RADIUS; z++){
+					Block block = blocks[x + RADIUS][y + RADIUS][z + RADIUS];
+					double dist = Math.abs(Math.sqrt(x * x + y * y + z * z));
+					if(block != Init.blockTipharesPlant && dist < RADIUS){
+						worldObj.setBlock(xCoord + x, yCoord + y + 32, zCoord + z, block);
+						worldObj.setBlockMetadataWithNotify(xCoord + x, yCoord + y + 32, zCoord + z, metas[x + RADIUS][y + RADIUS][z + RADIUS], 3);
+						worldObj.setBlockToAir(xCoord + x, yCoord + y, zCoord + z);
 					}
 				}
-				
-				for(int y = 0; y < RADIUS * 2; y++){
-					for(int x = 0; x < RADIUS * 2; x++){
-						for(int z = 0; z < RADIUS * 2; z++){
-							double value = normalise(noise[x * y * z], min, max);
-							
-							// multiply by distance to centre
-							/*double centreXMul = ((((double)x - (double)RADIUS) / (double)RADIUS) + 1.0) / 2.0;
-							double centreYMul = ((((double)y - (double)RADIUS) / (double)RADIUS) + 1.0) / 2.0;
-							double centreZMul = ((((double)z - (double)RADIUS) / (double)RADIUS) + 1.0) / 2.0;
-							
-							double centreMul = (centreXMul + centreYMul + centreZMul) / 3.0;
-							
-							//LogHelper.info(centreXMul + ", " + centreYMul + ", " + centreZMul);
-							
-							//double density = value * centreFalloff;
-							
-							//LogHelper.info("value: " + value + ", centreFalloff: " + centreFalloff + ", dens: "  + density);
-							double density = value * (1.0 - centreMul);
-							//LogHelper.info(density);
-*/							
-							if(value > 0.2){
-								// Shunt this one
-								int wx = xCoord - RADIUS + x;
-								int wy = yCoord - RADIUS + y;
-								int wz = zCoord - RADIUS + z;
-								
-								if(blocks[x * y * z] != Blocks.air){
-									worldObj.setBlock(wx, wy + 64, wz, blocks[x * y * z]);
-									worldObj.setBlockToAir(wx, wy, wz);
-									
-									//LogHelper.info("Moving " + wx + "/" + wy + "/" + wz + " to " + wx + ", " + (wy + 64) + ", " + wz);
-								}
-							}
-						}
-					}
+			}
+		}
+	}
+		
+	private void gen2(int height){
+		
+		LogHelper.info("Genning");
+		
+		int fullSize = RADIUS * 2;
+		
+		double[] noise = noiseGen.generateNoiseOctaves(null, xCoord, yCoord, zCoord, fullSize, fullSize, fullSize, 10, 10, 10);
+		Block[] blocks = new Block[fullSize * fullSize * fullSize];
+		double min = Double.MAX_VALUE;
+		double max = -Double.MAX_VALUE;
+		
+		// Loop 1
+		for(int y = -RADIUS; y < 0; y++){
+			for(int x = -RADIUS; x < RADIUS; x++){
+				for(int z = -RADIUS; z < RADIUS; z++){
+					// gather min/max noise values
+					double n = noise[(x + RADIUS) + ((y + RADIUS) * fullSize) + ((z + RADIUS) * fullSize * fullSize)];
+					if(n < min) min = n;
+					if(n > max) max = n;
 				}
-				
-				// done
-				genned = true;
+			}
+		}
+		
+		// Loop 2
+		for(int y = -RADIUS; y <= 0; y++){
+			double falloff = ((double)(y + RADIUS) / (double)RADIUS);
+			for(int x = -RADIUS; x < RADIUS; x++){
+				for(int z = -RADIUS; z < RADIUS; z++){
+					double dist = Math.abs(Math.sqrt(x * x + y * y + z * z));
+					double n = normalise(noise[(x + RADIUS) + ((y + RADIUS) * fullSize) + ((z + RADIUS) * fullSize * fullSize)], min, max);
+					
+					if(x == 0 && z == 0){
+						LogHelper.info("y: " + y + ", dist: " + dist + ", n: " + n + ", f: " + falloff + " both: " + (n * falloff));
+					}
+					
+					
+					double distMul = 1.0 - (dist / RADIUS);
+					
+					
+					double n2 = n * falloff * distMul;
+					Block b = null;
+					if(n2 > 0.6){
+						b = Blocks.dirt;
+					}
+					else if(n2 > 0.5){
+						b = Blocks.gravel;
+					}
+					else if(n2 > 0.1){
+						b = Blocks.stone;
+					}
+					
+					if(b != null) worldObj.setBlock(xCoord + x, yCoord + y + height + RADIUS, zCoord + z, b);
+				}
 			}
 		}
 	}
 	
 	private double normalise(double value, double min, double max){
-		return (value - min) / (max - min);
+		return (((value - min) * (1f - 0f)) / (max - min)) + 0f;
+	}
+	
+	public void applyDiamond(){
+		diamondApplied = true;
 	}
 		
 	public void setAsMaster(){
 		isMaster = true;
 		
-		noiseGen = new NoiseGeneratorOctaves(worldObj.rand, 8);
+		noiseGen = new NoiseGeneratorOctaves(worldObj.rand, 16);
 	}
 	
 	public boolean isMaster(){
