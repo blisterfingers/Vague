@@ -6,21 +6,16 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.gen.NoiseGeneratorOctaves;
 import villain.mc.vague.Init;
-import villain.mc.vague.blocks.BlockTipharesPlant;
-import villain.mc.vague.utils.LogHelper;
 
 public class TileEntityTipharesPlant extends TileEntity {
 	
 	private final int RADIUS = 16;
-	private final int MIN_HEIGHT = 8;
 
 	private boolean isMaster;
 	private boolean hasMaster;
 	private int masterX, masterY, masterZ;
 	private boolean genned = false;
 	private boolean diamondApplied = false;
-	
-	private NoiseGeneratorOctaves noiseGen;
 	
 	public TileEntityTipharesPlant(){
 		super();
@@ -69,95 +64,66 @@ public class TileEntityTipharesPlant extends TileEntity {
 					b = worldObj.getBlock(xCoord, yCoord + c, zCoord);
 				}
 				
-				if(c > MIN_HEIGHT){
-					gen2(c);
-					genned = true;
-				}
+				gen(c);
+				genned = true;
+				worldObj.setBlock(xCoord, yCoord, zCoord, Blocks.air);				
 			}
 		}
 	}
 	
-	private void gen(){
+	private void gen(int height){
 		int fullSize = RADIUS * 2;
-		Block[][][] blocks = new Block[fullSize][fullSize][fullSize];
-		int[][][] metas = new int[fullSize][fullSize][fullSize];
-		
-		for(int y = -RADIUS; y < RADIUS; y++){
-			for(int x = -RADIUS; x < RADIUS; x++){
-				for(int z = -RADIUS; z < RADIUS; z++){
-					blocks[x + RADIUS][y + RADIUS][z + RADIUS] = worldObj.getBlock(xCoord + x, yCoord + y, zCoord + z);
-					metas[x + RADIUS][y + RADIUS][z + RADIUS] = worldObj.getBlockMetadata(xCoord + x, yCoord + y, zCoord + z);
-				}
-			}
-		}
-		
-		for(int y = -RADIUS; y < RADIUS; y++){
-			for(int x = -RADIUS; x < RADIUS; x++){
-				for(int z = -RADIUS; z < RADIUS; z++){
-					Block block = blocks[x + RADIUS][y + RADIUS][z + RADIUS];
-					double dist = Math.abs(Math.sqrt(x * x + y * y + z * z));
-					if(block != Init.blockTipharesPlant && dist < RADIUS){
-						worldObj.setBlock(xCoord + x, yCoord + y + 32, zCoord + z, block);
-						worldObj.setBlockMetadataWithNotify(xCoord + x, yCoord + y + 32, zCoord + z, metas[x + RADIUS][y + RADIUS][z + RADIUS], 3);
-						worldObj.setBlockToAir(xCoord + x, yCoord + y, zCoord + z);
-					}
-				}
-			}
-		}
-	}
-		
-	private void gen2(int height){
-		
-		LogHelper.info("Genning");
-		
-		int fullSize = RADIUS * 2;
-		
-		double[] noise = noiseGen.generateNoiseOctaves(null, xCoord, yCoord, zCoord, fullSize, fullSize, fullSize, 10, 10, 10);
-		Block[] blocks = new Block[fullSize * fullSize * fullSize];
+		NoiseGeneratorOctaves noiseGen = new NoiseGeneratorOctaves(worldObj.rand, 8);
+		double[] noise = noiseGen.generateNoiseOctaves(null, xCoord, yCoord, zCoord, fullSize, fullSize, fullSize, 1, 1, 1);
 		double min = Double.MAX_VALUE;
 		double max = -Double.MAX_VALUE;
+		Block[] blocks = new Block[fullSize * fullSize * fullSize];
+		int[] metas = new int[fullSize * fullSize * fullSize];
 		
-		// Loop 1
-		for(int y = -RADIUS; y < 0; y++){
+		for(int y = -RADIUS; y < RADIUS; y++){
 			for(int x = -RADIUS; x < RADIUS; x++){
 				for(int z = -RADIUS; z < RADIUS; z++){
-					// gather min/max noise values
 					double n = noise[(x + RADIUS) + ((y + RADIUS) * fullSize) + ((z + RADIUS) * fullSize * fullSize)];
 					if(n < min) min = n;
 					if(n > max) max = n;
+					
+					blocks[(x + RADIUS) + ((y + RADIUS) * fullSize) + ((z + RADIUS) * fullSize * fullSize)] = 
+							worldObj.getBlock(xCoord + x, yCoord + y, zCoord + z);
+					metas[(x + RADIUS) + ((y + RADIUS) * fullSize) + ((z + RADIUS) * fullSize * fullSize)] =
+							worldObj.getBlockMetadata(xCoord + x, yCoord + y, zCoord + z);
 				}
 			}
 		}
 		
-		// Loop 2
-		for(int y = -RADIUS; y <= 0; y++){
-			double falloff = ((double)(y + RADIUS) / (double)RADIUS);
+		int minus = -1;
+		for(int y = -RADIUS; y < RADIUS; y++){
+			minus++;
+			double falloff = (double)(y + RADIUS) / (double)RADIUS;
+			double dist = 1.0 - (Math.abs(Math.sqrt(y * y)) / RADIUS);
+			double on = noise[(y + RADIUS) * fullSize];
+			double n = normalise(on, min, max);
+			if(n * dist * falloff > 0.1){
+				break;
+			}
+		}
+		
+		double falloff;
+		for(int y = -RADIUS; y < RADIUS; y++){
+			falloff = (double)(y + RADIUS) / (double)RADIUS;
 			for(int x = -RADIUS; x < RADIUS; x++){
 				for(int z = -RADIUS; z < RADIUS; z++){
-					double dist = Math.abs(Math.sqrt(x * x + y * y + z * z));
-					double n = normalise(noise[(x + RADIUS) + ((y + RADIUS) * fullSize) + ((z + RADIUS) * fullSize * fullSize)], min, max);
-					
-					if(x == 0 && z == 0){
-						LogHelper.info("y: " + y + ", dist: " + dist + ", n: " + n + ", f: " + falloff + " both: " + (n * falloff));
+					double dist = 1.0 - (Math.abs(Math.sqrt(x * x + y * y + z * z)) / RADIUS);
+					double on = noise[(x + RADIUS) + ((y + RADIUS) * fullSize) + ((z + RADIUS) * fullSize * fullSize)];
+					double n = normalise(on, min, max);
+					if(n * dist * falloff > 0.1){
+						Block b = blocks[(x + RADIUS) + ((y + RADIUS) * fullSize) + ((z + RADIUS) * fullSize * fullSize)];
+						int meta = metas[(x + RADIUS) + ((y + RADIUS) * fullSize) + ((z + RADIUS) * fullSize * fullSize)];
+						TileEntity tileEnt = worldObj.getTileEntity(xCoord + x, yCoord + y, zCoord + z);
+						if(b != null && b != Init.blockTipharesPlant && tileEnt == null){
+							worldObj.setBlock(xCoord + x, yCoord + y + height + RADIUS - minus, zCoord + z, b);
+							worldObj.setBlockMetadataWithNotify(xCoord + x, yCoord + y + height + RADIUS - minus, zCoord + z, meta, 3);
+						}
 					}
-					
-					
-					double distMul = 1.0 - (dist / RADIUS);
-					
-					
-					double n2 = n * falloff * distMul;
-					Block b = null;
-					if(n2 > 0.6){
-						b = Blocks.dirt;
-					}
-					else if(n2 > 0.5){
-						b = Blocks.gravel;
-					}
-					else if(n2 > 0.1){
-						b = Blocks.stone;
-					}
-					
-					if(b != null) worldObj.setBlock(xCoord + x, yCoord + y + height + RADIUS, zCoord + z, b);
 				}
 			}
 		}
@@ -173,8 +139,6 @@ public class TileEntityTipharesPlant extends TileEntity {
 		
 	public void setAsMaster(){
 		isMaster = true;
-		
-		noiseGen = new NoiseGeneratorOctaves(worldObj.rand, 16);
 	}
 	
 	public boolean isMaster(){
