@@ -13,7 +13,7 @@ public class TileEntityTipharesPlant extends TileEntity {
 	private static final int RADIUS = 16;
 	private static final int STEPS_PER_TICK_PHASE_01 = 1000;
 	private static final int STEPS_PER_TICK_PHASE_2 = 25;
-
+	
 	private boolean isMaster;
 	private boolean hasMaster;
 	private int masterX, masterY, masterZ;
@@ -94,7 +94,6 @@ public class TileEntityTipharesPlant extends TileEntity {
 		for(int i = 0; i < (genPhase == 0 || genPhase == 1 ? STEPS_PER_TICK_PHASE_01 : STEPS_PER_TICK_PHASE_2); i++){
 			switch(genPhase){
 				case 0:
-					LogHelper.info("phase 0: " + genX + ", " + genY + ", " + genZ);
 					double n = noise[(genX + RADIUS) + ((genY + RADIUS) * (RADIUS * 2)) + ((genZ + RADIUS) * (RADIUS * 2) * (RADIUS * 2))];
 					if(n < noiseMin) noiseMin = n;
 					if(n > noiseMax) noiseMax = n;
@@ -139,6 +138,8 @@ public class TileEntityTipharesPlant extends TileEntity {
 						genY = -RADIUS;
 					}
 					
+					
+					
 					break;
 					
 				case 2:
@@ -182,8 +183,36 @@ public class TileEntityTipharesPlant extends TileEntity {
 		return (((value - min) * (1f - 0f)) / (max - min)) + 0f;
 	}
 	
-	public void applyDiamond(){
-		startGenning();
+	public boolean applyDiamond(){
+		// Particles
+		for(int i = 0; i < 20; i++){
+			worldObj.spawnParticle("reddust", 
+					xCoord + worldObj.rand.nextDouble(), 
+					yCoord + worldObj.rand.nextDouble(), 
+					zCoord + worldObj.rand.nextDouble(), 
+					-0.5 + worldObj.rand.nextDouble(), 
+					0.5, 
+					-0.5 + worldObj.rand.nextDouble());
+		}
+		
+		int y = yCoord;
+		TileEntityTipharesPlant tileEnt = (TileEntityTipharesPlant)worldObj.getTileEntity(xCoord, y, zCoord);
+		while(!tileEnt.isMaster){
+			y--;
+			tileEnt = (TileEntityTipharesPlant)worldObj.getTileEntity(xCoord, y, zCoord);
+			if(tileEnt == null){
+				LogHelper.warn("Could not find master tile entity.");
+				return false;
+			}
+		}
+		
+		if(tileEnt.genPhase != -1){
+			return false;
+		}
+				
+		tileEnt.startGenning();
+		
+		return true;
 	}
 		
 	public void setAsMaster(){
