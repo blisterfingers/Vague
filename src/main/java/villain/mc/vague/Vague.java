@@ -6,9 +6,11 @@ import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.network.NetworkRegistry;
+import cpw.mods.fml.common.registry.GameRegistry;
 import villain.mc.vague.gui.GuiHandler;
 import villain.mc.vague.net.PacketHandler;
 import villain.mc.vague.proxy.IProxy;
+import villain.mc.vague.worldgen.WorldGen;
 
 @Mod(modid = Reference.MOD_ID, name = Reference.MOD_NAME, version = Reference.MOD_VERSION)
 public class Vague {
@@ -32,6 +34,9 @@ public class Vague {
 		
 		// Net
 		PacketHandler.initPackets();
+		
+		// WorldGen
+		GameRegistry.registerWorldGenerator(new WorldGen(), 128);
 	}
 	
 	@Mod.EventHandler
