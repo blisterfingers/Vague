@@ -39,7 +39,6 @@ public class BlockTipharesPlant extends BlockCropBase implements ITileEntityProv
 			// Set this as master
 			TileEntityTipharesPlant tileEnt = (TileEntityTipharesPlant)world.getTileEntity(x, y, z);
 			tileEnt.setAsMaster();
-			//LogHelper.info("Set as master: " + x + ", " + y + ", " + z);
 			return;
 		}
 		
@@ -53,7 +52,6 @@ public class BlockTipharesPlant extends BlockCropBase implements ITileEntityProv
 				// Set this as slave
 				tileEnt = (TileEntityTipharesPlant)world.getTileEntity(x, y, z);
 				tileEnt.setAsSlave(x, y - i, z);
-				//LogHelper.info("Set as slave: " + x + ", " + y + ", " + z + " --- master: " + x + ", " + (y - i) + ", " + z);
 				return;
 			}				
 			i++;
@@ -67,6 +65,10 @@ public class BlockTipharesPlant extends BlockCropBase implements ITileEntityProv
 		if(player.getHeldItem().getItem() == Items.diamond){
 			TileEntityTipharesPlant tiphEntity = (TileEntityTipharesPlant)world.getTileEntity(x, y, z);
 			if(tiphEntity == null) return false;
+			
+			if(!tiphEntity.isMaster()){
+				return false;
+			}
 			
 			player.getHeldItem().stackSize--;
 			if(player.getHeldItem().stackSize == 0){

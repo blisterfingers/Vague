@@ -6,16 +6,23 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.gen.NoiseGeneratorOctaves;
 import villain.mc.vague.Init;
+import villain.mc.vague.utils.LogHelper;
 
 public class TileEntityTipharesPlant extends TileEntity {
 	
-	private final int RADIUS = 16;
+	private static final int RADIUS = 16;
+	private static final int STEPS_PER_TICK_PHASE_01 = 1000;
+	private static final int STEPS_PER_TICK_PHASE_2 = 25;
 
 	private boolean isMaster;
 	private boolean hasMaster;
 	private int masterX, masterY, masterZ;
-	private boolean genned = false;
-	private boolean diamondApplied = false;
+	
+	private double[] noise;
+	private double noiseMin, noiseMax;
+	private int genX, genY, genZ, genPhase = -1, genMinus, genHeight;
+	private Block[] blocks;
+	private int[] metas;
 	
 	public TileEntityTipharesPlant(){
 		super();
@@ -30,7 +37,7 @@ public class TileEntityTipharesPlant extends TileEntity {
 			nbt.setInteger("masterX", masterX);
 			nbt.setInteger("masterY", masterY);
 			nbt.setInteger("masterZ", masterZ);
-		}
+		}		
 	}
 	
 	@Override
@@ -41,7 +48,7 @@ public class TileEntityTipharesPlant extends TileEntity {
 		if(hasMaster){
 			masterX = nbt.getInteger("masterX");
 			masterY = nbt.getInteger("masterY");
-			masterZ = nbt.getInteger("masterZ");
+			masterZ = nbt.getInteger("masterZ");			
 		}
 	}
 	
@@ -55,78 +62,120 @@ public class TileEntityTipharesPlant extends TileEntity {
 		super.updateEntity();
 		
 		if(!worldObj.isRemote){
-			if(isMaster && !genned && diamondApplied){
-				// Check the height of the current plant stack
-				Block b = worldObj.getBlock(xCoord, yCoord + 1, zCoord);
-				int c = 1;
-				while(b == Init.blockTipharesPlant){
-					c++;
-					b = worldObj.getBlock(xCoord, yCoord + c, zCoord);
-				}
-				
-				gen(c);
-				genned = true;
-				worldObj.setBlock(xCoord, yCoord, zCoord, Blocks.air);				
+			if(isMaster && genPhase != -1){
+				genUpdate();
 			}
 		}
 	}
 	
-	private void gen(int height){
-		int fullSize = RADIUS * 2;
-		NoiseGeneratorOctaves noiseGen = new NoiseGeneratorOctaves(worldObj.rand, 8);
-		double[] noise = noiseGen.generateNoiseOctaves(null, xCoord, yCoord, zCoord, fullSize, fullSize, fullSize, 1, 1, 1);
-		double min = Double.MAX_VALUE;
-		double max = -Double.MAX_VALUE;
-		Block[] blocks = new Block[fullSize * fullSize * fullSize];
-		int[] metas = new int[fullSize * fullSize * fullSize];
+	private void startGenning(){
+		// Check the height of the current plant stack
+		Block b = worldObj.getBlock(xCoord, yCoord + 1, zCoord);
+		genHeight = 1;
+		while(b == Init.blockTipharesPlant){
+			genHeight++;
+			b = worldObj.getBlock(xCoord, yCoord + genHeight, zCoord);
+		}
 		
-		for(int y = -RADIUS; y < RADIUS; y++){
-			for(int x = -RADIUS; x < RADIUS; x++){
-				for(int z = -RADIUS; z < RADIUS; z++){
-					double n = noise[(x + RADIUS) + ((y + RADIUS) * fullSize) + ((z + RADIUS) * fullSize * fullSize)];
-					if(n < min) min = n;
-					if(n > max) max = n;
+		blocks = new Block[(RADIUS * 2) * (RADIUS * 2) * (RADIUS * 2)];
+		metas = new int[(RADIUS * 2) * (RADIUS * 2) * (RADIUS * 2)];
+		genX = -RADIUS;
+		genY = -RADIUS;
+		genZ = -RADIUS;
+		genMinus = 0;
+		genPhase = 0;
+	}
+	
+	private void genUpdate(){
+		if(noise == null){
+			noise = new NoiseGeneratorOctaves(worldObj.rand, 8).generateNoiseOctaves(null, xCoord, yCoord, zCoord, RADIUS * 2, RADIUS * 2, RADIUS * 2, 1, 1, 1);
+		}
+		
+		for(int i = 0; i < (genPhase == 0 || genPhase == 1 ? STEPS_PER_TICK_PHASE_01 : STEPS_PER_TICK_PHASE_2); i++){
+			switch(genPhase){
+				case 0:
+					LogHelper.info("phase 0: " + genX + ", " + genY + ", " + genZ);
+					double n = noise[(genX + RADIUS) + ((genY + RADIUS) * (RADIUS * 2)) + ((genZ + RADIUS) * (RADIUS * 2) * (RADIUS * 2))];
+					if(n < noiseMin) noiseMin = n;
+					if(n > noiseMax) noiseMax = n;
 					
-					blocks[(x + RADIUS) + ((y + RADIUS) * fullSize) + ((z + RADIUS) * fullSize * fullSize)] = 
-							worldObj.getBlock(xCoord + x, yCoord + y, zCoord + z);
-					metas[(x + RADIUS) + ((y + RADIUS) * fullSize) + ((z + RADIUS) * fullSize * fullSize)] =
-							worldObj.getBlockMetadata(xCoord + x, yCoord + y, zCoord + z);
-				}
-			}
-		}
-		
-		int minus = -1;
-		for(int y = -RADIUS; y < RADIUS; y++){
-			minus++;
-			double falloff = (double)(y + RADIUS) / (double)RADIUS;
-			double dist = 1.0 - (Math.abs(Math.sqrt(y * y)) / RADIUS);
-			double on = noise[(y + RADIUS) * fullSize];
-			double n = normalise(on, min, max);
-			if(n * dist * falloff > 0.1){
-				break;
-			}
-		}
-		
-		double falloff;
-		for(int y = -RADIUS; y < RADIUS; y++){
-			falloff = (double)(y + RADIUS) / (double)RADIUS;
-			for(int x = -RADIUS; x < RADIUS; x++){
-				for(int z = -RADIUS; z < RADIUS; z++){
-					double dist = 1.0 - (Math.abs(Math.sqrt(x * x + y * y + z * z)) / RADIUS);
-					double on = noise[(x + RADIUS) + ((y + RADIUS) * fullSize) + ((z + RADIUS) * fullSize * fullSize)];
-					double n = normalise(on, min, max);
-					if(n * dist * falloff > 0.1){
-						Block b = blocks[(x + RADIUS) + ((y + RADIUS) * fullSize) + ((z + RADIUS) * fullSize * fullSize)];
-						int meta = metas[(x + RADIUS) + ((y + RADIUS) * fullSize) + ((z + RADIUS) * fullSize * fullSize)];
-						TileEntity tileEnt = worldObj.getTileEntity(xCoord + x, yCoord + y, zCoord + z);
-						if(b != null && b != Init.blockTipharesPlant && tileEnt == null){
-							worldObj.setBlock(xCoord + x, yCoord + y + height + RADIUS - minus, zCoord + z, b);
-							worldObj.setBlockMetadataWithNotify(xCoord + x, yCoord + y + height + RADIUS - minus, zCoord + z, meta, 3);
+					blocks[(genX + RADIUS) + ((genY + RADIUS) * (RADIUS * 2)) + ((genZ + RADIUS) * (RADIUS * 2) * (RADIUS * 2))] = 
+							worldObj.getBlock(xCoord + genX, yCoord + genY, zCoord + genZ);
+					metas[(genX + RADIUS) + ((genY + RADIUS) * (RADIUS * 2)) + ((genZ + RADIUS) * (RADIUS * 2) * (RADIUS * 2))] =
+							worldObj.getBlockMetadata(xCoord + genX, yCoord + genY, zCoord + genZ);
+					
+					genX++;
+					if(genX >= RADIUS){
+						genX = -RADIUS;
+						genZ++;
+						if(genZ >= RADIUS){
+							genZ = -RADIUS;
+							genY++;
+							if(genY >= RADIUS){
+								genPhase = 1;
+								genZ = -RADIUS;
+								genY = -RADIUS;
+								genZ = -RADIUS;
+							}
 						}
 					}
-				}
+					break;					
+					
+				case 1:
+					genMinus++;
+					double falloff = (double)(genY + RADIUS) / (double)RADIUS;
+					double dist = 1.0 - (Math.abs(Math.sqrt(genY * genY)) / RADIUS);
+					double on = noise[(genY + RADIUS) * (RADIUS * 2)];
+					double n2 = normalise(on, noiseMin, noiseMax);
+					if(n2 * dist * falloff > 0.1){
+						genPhase = 2;
+						genY = -RADIUS;
+						break;
+					}
+					
+					genY++;
+					if(genY >= RADIUS){
+						genPhase = 2;
+						genY = -RADIUS;
+					}
+					
+					break;
+					
+				case 2:
+					double dist2 = 1.0 - (Math.abs(Math.sqrt(genX * genX + genY * genY + genZ * genZ)) / RADIUS);
+					double on2 = noise[(genX + RADIUS) + ((genY + RADIUS) * (RADIUS * 2)) + ((genZ + RADIUS) * (RADIUS * 2) * (RADIUS * 2))];
+					double n3 = normalise(on2, noiseMin, noiseMax);
+					double falloff2 = (double)(genY + RADIUS) / (double)RADIUS;
+					if(n3 * dist2 * falloff2 > 0.1){
+						Block b = blocks[(genX + RADIUS) + ((genY + RADIUS) * (RADIUS * 2)) + ((genZ + RADIUS) * (RADIUS * 2) * (RADIUS * 2))];
+						int meta = metas[(genX + RADIUS) + ((genY + RADIUS) * (RADIUS * 2)) + ((genZ + RADIUS) * (RADIUS * 2) * (RADIUS * 2))];
+						TileEntity tileEnt = worldObj.getTileEntity(xCoord + genX, yCoord + genY, zCoord + genZ);
+						if(b != null && b != Init.blockTipharesPlant && tileEnt == null){
+							worldObj.setBlock(xCoord + genX, yCoord + genY + genHeight + RADIUS - genMinus, zCoord + genZ, b);
+							worldObj.setBlockMetadataWithNotify(xCoord + genX, yCoord + genY + genHeight + RADIUS - genMinus, zCoord + genZ, meta, 3);
+						}
+					}
+					
+					genX++;
+					if(genX >= RADIUS){
+						genX = -RADIUS;
+						genZ++;
+						if(genZ >= RADIUS){
+							genZ = -RADIUS;
+							genY++;
+							if(genY >= RADIUS){
+								genFinish();
+							}
+						}
+					}
+					break;
 			}
 		}
+	}
+	
+	private void genFinish(){
+		genPhase = -1;
+		worldObj.setBlock(xCoord, yCoord, zCoord, Blocks.air);
 	}
 	
 	private double normalise(double value, double min, double max){
@@ -134,7 +183,7 @@ public class TileEntityTipharesPlant extends TileEntity {
 	}
 	
 	public void applyDiamond(){
-		diamondApplied = true;
+		startGenning();
 	}
 		
 	public void setAsMaster(){
