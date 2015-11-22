@@ -4,8 +4,10 @@ import cpw.mods.fml.client.registry.ClientRegistry;
 import cpw.mods.fml.client.registry.RenderingRegistry;
 import net.minecraft.item.Item;
 import net.minecraftforge.client.MinecraftForgeClient;
+import net.minecraftforge.common.MinecraftForge;
 import villain.mc.vague.Init;
 import villain.mc.vague.entities.EntityGrenade;
+import villain.mc.vague.rendering.RenderWorldLastHandler;
 import villain.mc.vague.rendering.entities.RenderGrenade;
 import villain.mc.vague.rendering.tiles.RendererLanternaMagica;
 import villain.mc.vague.tileents.TileEntityLanternaMagica;
@@ -28,5 +30,8 @@ public class ClientProxy extends CommonProxy {
 		RendererLanternaMagica lanternaRenderer = new RendererLanternaMagica();
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityLanternaMagica.class, lanternaRenderer);
 		MinecraftForgeClient.registerItemRenderer(Item.getItemFromBlock(Init.blockLanternaMagica), lanternaRenderer);
+		
+		// Other
+		MinecraftForge.EVENT_BUS.register(new RenderWorldLastHandler());
 	}
 }

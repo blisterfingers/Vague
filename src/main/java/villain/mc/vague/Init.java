@@ -17,6 +17,7 @@ import villain.mc.vague.items.ItemIronNugget;
 import villain.mc.vague.items.ItemLanternSlide;
 import villain.mc.vague.items.ItemMagnet;
 import villain.mc.vague.items.ItemPin;
+import villain.mc.vague.items.ItemSurveyTool;
 import villain.mc.vague.items.ItemTestThing;
 import villain.mc.vague.items.ItemTipharesEmbryo;
 import villain.mc.vague.tileents.TileEntityLanternaMagica;
@@ -45,6 +46,7 @@ public class Init {
 	public static ItemLanternSlide itemLanternSlide16;
 	public static ItemLanternSlide itemLanternSlide32;
 	public static ItemLanternSlide itemLanternSlide64;
+	public static ItemSurveyTool itemSurveyTool;
 	
 	public static ItemGrenadeCasing grenadeCasing;
 	public static ItemFiringPin firingPin;
@@ -77,6 +79,7 @@ public class Init {
 		itemLanternSlide16 = new ItemLanternSlide((byte)0);
 		itemLanternSlide32 = new ItemLanternSlide((byte)1);
 		itemLanternSlide64 = new ItemLanternSlide((byte)2);
+		itemSurveyTool = new ItemSurveyTool();
 		
 		grenadeCasing = new ItemGrenadeCasing();
 		firingPin = new ItemFiringPin();

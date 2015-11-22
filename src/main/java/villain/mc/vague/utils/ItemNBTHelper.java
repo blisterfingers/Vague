@@ -2,6 +2,7 @@ package villain.mc.vague.utils;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagIntArray;
 
 public class ItemNBTHelper {
 
@@ -45,5 +46,10 @@ public class ItemNBTHelper {
 	public static void setCompound(ItemStack stack, String tag, NBTTagCompound compound){
 		checkAndCreateNBT(stack);
 		stack.getTagCompound().setTag(tag, compound);
+	}
+	
+	public static void setIntArray(ItemStack stack, String tag, int[] intAr){
+		checkAndCreateNBT(stack);
+		stack.getTagCompound().setIntArray(tag, intAr);
 	}
 }
