@@ -1,7 +1,5 @@
 package villain.mc.vague.blocks;
 
-import java.util.ArrayList;
-
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.EntityLivingBase;
@@ -12,7 +10,6 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 import villain.mc.vague.Init;
-import villain.mc.vague.items.ItemLanternSlide;
 import villain.mc.vague.tileents.TileEntityLanternaMagica;
 import villain.mc.vague.utils.EntityHelper;
 
@@ -33,9 +30,6 @@ public class BlockLanternaMagica extends BlockBase implements ITileEntityProvide
 	public void onBlockPlacedBy(World world, int x, int y, int z, EntityLivingBase entityLiving, ItemStack itemStack) {
 		int meta = EntityHelper.getMetaForPlacementDirection(entityLiving);
 		world.setBlockMetadataWithNotify(x, y, z, meta, 3);
-		
-		TileEntityLanternaMagica tileEnt = (TileEntityLanternaMagica)world.getTileEntity(x, y, z);
-		tileEnt.setInitialDirection(meta);
 	}
 	
 	@Override

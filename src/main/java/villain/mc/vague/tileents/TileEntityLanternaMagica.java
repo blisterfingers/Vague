@@ -2,8 +2,10 @@ package villain.mc.vague.tileents;
 
 import java.util.ArrayList;
 
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.Event;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -25,15 +27,9 @@ import villain.mc.vague.utils.LogHelper;
 public class TileEntityLanternaMagica extends TileEntity {
 	
 	private static final int DEFAULT_SIZE = 5;	
-	private static final int MINIMUM_SIZE = 1;
-	private static final int MAXIMUM_SIZE = 64;	
-	private static final int MAX_OFFSET = 16;	
 	
 	private static final ArrayList<BlockPlaceInfo> places = new ArrayList<BlockPlaceInfo>();
 	
-	private int projectionHeight = DEFAULT_SIZE;
-	private int projectionWidth = DEFAULT_SIZE;
-	private int projectionDepth = DEFAULT_SIZE;
 	private int projectionOffsetX = 0;
 	private int projectionOffsetY = DEFAULT_SIZE / 2;
 	private int projectionOffsetZ = 0;
@@ -45,78 +41,9 @@ public class TileEntityLanternaMagica extends TileEntity {
 
 	public TileEntityLanternaMagica(){
 		MinecraftForge.EVENT_BUS.register(this);
+		FMLCommonHandler.instance().bus().register(this);
 	}
-	
-	public void expand(ForgeDirection dir){
-		switch(dir){
-			case NORTH:
-				projectionDepth += 2;
-				break;
-			case SOUTH:
-				projectionDepth -= 2;
-				break;
-			case EAST:
-				projectionWidth -= 2;
-				break;
-			case WEST:
-				projectionWidth += 2;
-				break;
-			case UP:
-				projectionHeight += 2;
-				break;
-			case DOWN:
-				projectionHeight -= 2;
-				break;
-			case UNKNOWN:
-				// No-Op
-				break;
-		}
-		
-		if(projectionWidth < MINIMUM_SIZE) projectionWidth = MINIMUM_SIZE;
-		else if(projectionWidth > MAXIMUM_SIZE) projectionWidth = MAXIMUM_SIZE;
-		
-		if(projectionHeight < MINIMUM_SIZE) projectionHeight = MINIMUM_SIZE;
-		else if(projectionHeight > MAXIMUM_SIZE) projectionHeight = MAXIMUM_SIZE;
-		
-		if(projectionDepth < MINIMUM_SIZE) projectionDepth = MINIMUM_SIZE;
-		else if(projectionDepth > MAXIMUM_SIZE) projectionDepth = MAXIMUM_SIZE;
-	}
-	
-	public void shift(ForgeDirection dir){
-		switch(dir){
-			case NORTH:
-				projectionOffsetZ -= 1;
-				break;
-			case SOUTH:
-				projectionOffsetZ += 1;
-				break;
-			case EAST:
-				projectionOffsetX += 1;
-				break;
-			case WEST:
-				projectionOffsetX -= 1;
-				break;
-			case UP:
-				projectionOffsetY += 1;
-				break;
-			case DOWN:
-				projectionOffsetY -= 1;
-				break;
-			case UNKNOWN:
-				// No-Op
-				break;
-		}
-		
-		if(projectionOffsetX > MAX_OFFSET) projectionOffsetX = MAX_OFFSET;
-		else if(projectionOffsetX < -MAX_OFFSET) projectionOffsetX = -MAX_OFFSET;
-		
-		if(projectionOffsetY > MAX_OFFSET) projectionOffsetY = MAX_OFFSET;
-		else if(projectionOffsetY < -MAX_OFFSET) projectionOffsetY = -MAX_OFFSET;
-		
-		if(projectionOffsetZ > MAX_OFFSET) projectionOffsetZ = MAX_OFFSET;
-		else if(projectionOffsetZ < -MAX_OFFSET) projectionOffsetZ = -MAX_OFFSET;
-	}
-	
+
 	public boolean hasSlideStack(){
 		return slideStack != null;
 	}
@@ -150,7 +77,6 @@ public class TileEntityLanternaMagica extends TileEntity {
 		timeSinceRecordingBegan++;
 		
 		// Add any place events to this item if they're in our area
-		//LogHelper.info("places size: " +places.size());
 		if(places.size() > 0){			
 			/*BlockPlaceInfo bpi = places.get(0);
 			ArrayList<String> owners = ItemLanternSlide.getOwners(slideStack);
@@ -177,6 +103,8 @@ public class TileEntityLanternaMagica extends TileEntity {
 			BlockPlaceInfo bpi = places.get(0);
 			
 			// Is this placement in this entity's zone
+			LogHelper.info("bpi.z: " + bpi.z + ", zoneMinZ: " + getZoneMinZ() + ", zoneMaxZ: " + getZoneMaxZ());
+			
 			if(bpi.x >= getZoneMinX() && bpi.x < getZoneMaxX() &&
 					bpi.y >= getZoneMinY() && bpi.y < getZoneMaxY() &&
 					bpi.z >= getZoneMinZ() && bpi.z < getZoneMaxZ()){
@@ -201,12 +129,6 @@ public class TileEntityLanternaMagica extends TileEntity {
 	@Override
 	public void writeToNBT(NBTTagCompound nbt) {
 		super.writeToNBT(nbt);
-		nbt.setInteger("projHeight", projectionHeight);
-		nbt.setInteger("projWidth", projectionWidth);
-		nbt.setInteger("projDepth", projectionDepth);
-		nbt.setInteger("projOffsetX", projectionOffsetX);
-		nbt.setInteger("projOffsetY", projectionOffsetY);
-		nbt.setInteger("projOffsetZ", projectionOffsetZ);
 		if(slideStack != null){
 			NBTTagCompound slideTag = new NBTTagCompound();
 			slideStack.writeToNBT(slideTag);
@@ -220,11 +142,6 @@ public class TileEntityLanternaMagica extends TileEntity {
 	@Override
 	public void readFromNBT(NBTTagCompound nbt) {
 		super.readFromNBT(nbt);
-		projectionHeight = nbt.getInteger("projHeight");
-		projectionWidth = nbt.getInteger("projWidth");
-		projectionDepth = nbt.getInteger("projDepth");
-		projectionOffsetX = nbt.getInteger("projOffsetX");
-		projectionOffsetY = nbt.getInteger("projOffsetY");
 		projectionOffsetZ = nbt.getInteger("projOffsetZ");
 		if(nbt.hasKey("slide")){
 			slideStack = ItemStack.loadItemStackFromNBT(nbt.getCompoundTag("slide"));
@@ -258,17 +175,30 @@ public class TileEntityLanternaMagica extends TileEntity {
 		
 		return AxisAlignedBB.getBoundingBox(minX, minY, minZ, maxX, maxY, maxZ);
 	}
-
-	public int getProjectionHeight() {
-		return projectionHeight;
+	
+	private void updateOffset(int metaDir){
+		if(!hasSlideStack()) return;
+		
+		int size = ((ItemLanternSlide)slideStack.getItem()).getSize();
+		
+		switch(metaDir){
+		case 0:
+			projectionOffsetZ = -((size / 2) + 1);
+			break;
+		case 1:
+			projectionOffsetX = (size / 2) + 1;
+			break;
+		case 2:
+			projectionOffsetZ = (size / 2) + 1;
+			break;
+		case 3:
+			projectionOffsetX = -((size / 2) + 1);
+			break;
+	}
 	}
 
-	public int getProjectionWidth() {
-		return projectionWidth;
-	}
-
-	public int getProjectionDepth() {
-		return projectionDepth;
+	public int getProjectionSize() {
+		return hasSlideStack() ? ((ItemLanternSlide)slideStack.getItem()).getSize() : 0;
 	}
 
 	public int getProjectionOffsetX() {
@@ -283,29 +213,13 @@ public class TileEntityLanternaMagica extends TileEntity {
 		return projectionOffsetZ;
 	}
 	
-	public void setInitialDirection(int metaDir){
-		switch(metaDir){
-			case 0:
-				projectionOffsetZ = -((DEFAULT_SIZE / 2) + 1);
-				break;
-			case 1:
-				projectionOffsetX = (DEFAULT_SIZE / 2) + 1;
-				break;
-			case 2:
-				projectionOffsetZ = (DEFAULT_SIZE / 2) + 1;
-				break;
-			case 3:
-				projectionOffsetX = -((DEFAULT_SIZE / 2) + 1);
-				break;
-		}
-	}
-	
 	public ItemStack getSlideStack(){
 		return slideStack;
 	}
 	
 	public void setSlideStack(ItemStack slideStack){
 		this.slideStack = slideStack;
+		updateOffset(worldObj.getBlockMetadata(xCoord, yCoord, zCoord));
 	}
 	
 	public int getTimeSinceRecordingStarted(){
@@ -313,43 +227,47 @@ public class TileEntityLanternaMagica extends TileEntity {
 	}
 	
 	public int getZoneMinX(){
-		return xCoord + projectionOffsetX - (projectionWidth / 2);
+		return hasSlideStack() ? xCoord + projectionOffsetX - (((ItemLanternSlide)slideStack.getItem()).getSize() / 2) : 0;
 	}
 	
 	public int getZoneMaxX(){
-		return xCoord + projectionOffsetZ + (projectionWidth / 2) + 1;
+		return hasSlideStack() ? xCoord + projectionOffsetZ + (((ItemLanternSlide)slideStack.getItem()).getSize() / 2) + 1 : 0;
 	}
 	
 	public int getZoneMinY(){
-		return yCoord + projectionOffsetY - (projectionHeight / 2);
+		return hasSlideStack() ? yCoord + projectionOffsetY - (((ItemLanternSlide)slideStack.getItem()).getSize() / 2) : 0;
 	}
 	
 	public int getZoneMaxY(){
-		return yCoord + projectionOffsetY + (projectionHeight / 2) + 1;
+		return hasSlideStack() ? yCoord + projectionOffsetY + (((ItemLanternSlide)slideStack.getItem()).getSize() / 2) + 1 : 0;
 	}
 	
 	public int getZoneMinZ(){
-		return zCoord + projectionOffsetZ - (projectionDepth / 2);
+		return hasSlideStack() ? zCoord + projectionOffsetZ - (((ItemLanternSlide)slideStack.getItem()).getSize() / 2) : 0;
 	}
 	
 	public int getZoneMaxZ(){
-		return zCoord + projectionOffsetZ + (projectionDepth / 2) + 1;
+		return hasSlideStack() ? zCoord + projectionOffsetZ + (((ItemLanternSlide)slideStack.getItem()).getSize() / 2) + 1 : 0;
 	}
 	
 	@SubscribeEvent
 	public void playerInteractEvent(net.minecraftforge.event.entity.player.PlayerInteractEvent event){
-		if(!event.world.isRemote){
-			if(event.entityPlayer.getHeldItem() != null && event.entityPlayer.getHeldItem().getItem() instanceof ItemBlock &&
-					event.action == Action.RIGHT_CLICK_BLOCK){
-				// Player is placing a block
-				BlockPos bPos = BlockHelper.blockPlaceNewPosition(event.x, event.y, event.z, event.face);
-				BlockPlaceInfo bpi = new BlockPlaceInfo(bPos.getX(), bPos.getY(), bPos.getZ(), event.entityPlayer.getDisplayName(),				
-						((ItemBlock)event.entityPlayer.getHeldItem().getItem()).field_150939_a.getUnlocalizedName());
-					if(!places.contains(bpi)){
-					places.add(bpi);
-				}
+		if(event.entityPlayer.getHeldItem() != null && event.entityPlayer.getHeldItem().getItem() instanceof ItemBlock &&
+				event.action == Action.RIGHT_CLICK_BLOCK){
+			// Player is placing a block
+			BlockPos bPos = BlockHelper.blockPlaceNewPosition(event.x, event.y, event.z, event.face);
+			BlockPlaceInfo bpi = new BlockPlaceInfo(bPos.getX(), bPos.getY(), bPos.getZ(), event.entityPlayer.getDisplayName(),				
+					((ItemBlock)event.entityPlayer.getHeldItem().getItem()).field_150939_a.getUnlocalizedName());
+				if(!places.contains(bpi)){
+				places.add(bpi);
+				LogHelper.info("new size: " + places.size());
 			}
 		}
+	}
+	
+	@SubscribeEvent
+	public void tickEvent(TickEvent.WorldTickEvent event){
+		
 	}
 	
 	private static class BlockPlaceInfo {

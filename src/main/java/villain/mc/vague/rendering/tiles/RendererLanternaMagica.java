@@ -82,12 +82,12 @@ public class RendererLanternaMagica extends TileEntitySpecialRenderer implements
 		GL11.glPopMatrix();
 		
 		// Render Bounds
-		if(lanternEntity.getWorldObj() != null){
+		if(lanternEntity.getWorldObj() != null && lanternEntity.hasSlideStack()){
 			bindTexture(LOC_TEXTUREBOUNDS);
 			
 			GL11.glPushMatrix();
-			GL11.glTranslated(x + lanternEntity.getProjectionOffsetX() + 0.5, y + lanternEntity.getProjectonOffsetY() + 0.5, z + lanternEntity.getProjectionOffsetZ() + 0.5);
-			GL11.glScaled(lanternEntity.getProjectionWidth(), lanternEntity.getProjectionHeight(), lanternEntity.getProjectionDepth());
+			GL11.glTranslated(x + lanternEntity.getProjectionOffsetX(), y + lanternEntity.getProjectonOffsetY(), z + lanternEntity.getProjectionOffsetZ());
+			GL11.glScaled(lanternEntity.getProjectionSize(), lanternEntity.getProjectionSize(), lanternEntity.getProjectionSize());
 			GL11.glEnable(GL11.GL_BLEND);
 			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 			
